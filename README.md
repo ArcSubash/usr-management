@@ -100,8 +100,8 @@ Admin can:
 
 ## 1. Clone the repository
 
-    `git clone <your-repository-url>
-    cd project`
+    git clone <your-repository-url>
+    cd project
 
 ------------------------------------------------------------------------
 
@@ -109,27 +109,27 @@ Admin can:
 
 Navigate to backend folder:
 
-    `cd backend`
+    cd backend
 
 Install dependencies:
 
-    `npm install`
+    npm install
 
 Create `.env` file:
 
-    `PORT=5000
+    PORT=5000
     MONGO_URI=your_mongodb_connection_string
     JWT_SECRET=your_secret_key
     ADMIN_EMAIL=admin@test.com
-    ADMIN_PASSWORD=admin123`
+    ADMIN_PASSWORD=admin123
 
 Start backend server:
 
-    `npm run dev`
+    npm run dev
 
 Backend runs at:
 
-    `http://localhost:5000`
+    http://localhost:5000
 
 ------------------------------------------------------------------------
 
@@ -137,19 +137,19 @@ Backend runs at:
 
 Navigate to frontend folder:
 
-    `cd frontend`
+    cd frontend
 
 Install dependencies:
 
-   `npm install`
+    npm install
 
 Start frontend:
 
-    `npm run dev`
+    npm run dev
 
 Frontend runs at:
 
-   `http://localhost:5173`
+    http://localhost:5173
 
 ------------------------------------------------------------------------
 
@@ -160,8 +160,8 @@ is automatically created.
 
 Use the following credentials:
 
-    `Email: admin@test.com
-    Password: admin123`
+    Email: admin@test.com
+    Password: admin123
 
 ------------------------------------------------------------------------
 
@@ -171,7 +171,7 @@ Use the following credentials:
 
 ### Register User
 
-POST: /api/auth/register
+    POST /api/auth/register
 
 Creates a normal user account.
 
@@ -189,7 +189,7 @@ Example body:
 
 ### Login
 
-POST: /api/auth/login
+    POST /api/auth/login
 
 Returns JWT token.
 
