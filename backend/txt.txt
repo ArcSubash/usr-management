@@ -1,0 +1,6 @@
+Server:  dns.google
+Address:  8.8.8.8
+
+cluster0.eqln2hq.mongodb.net	text =
+
+	"authSource=admin&replicaSet=atlas-evh299-shard-0"

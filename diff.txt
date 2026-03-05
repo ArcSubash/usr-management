@@ -1,0 +1,103 @@
+diff --git a/backend/middleware/auth.js b/backend/middleware/auth.js
+index e69de29..063f2d3 100644
+--- a/backend/middleware/auth.js
++++ b/backend/middleware/auth.js
+@@ -0,0 +1,27 @@
++const jwt = require("jsonwebtoken");
++
++function auth(req, res, next) {
++    const header = req.headers.authorization;
++    if (!header) return res.status(401).json({ message: "No token" });
++
++    const token = header.split(" ")[1];
++    if (!token) return res.status(401).json({ message: "Bad token format" });
++
++    try {
++        const decoded = jwt.verify(token, process.env.JWT_SECRET);
++        req.user = decoded; // { id, role }
++        next();
++    } catch (err) {
++        return res.status(401).json({ message: "Invalid token" });
++    }
++}
++
++function adminOnly(req, res, next) {
++    if (!req.user || req.user.role !== "admin") {
++        return res.status(403).json({ message: "Admin only" });
++    }
++    next();
++}
++
++// ✅ THIS LINE MUST BE EXACTLY LIKE THIS:
++module.exports = { auth, adminOnly };
+\ No newline at end of file
+diff --git a/backend/models/User.js b/backend/models/User.js
+index e69de29..7a80489 100644
+--- a/backend/models/User.js
++++ b/backend/models/User.js
+@@ -0,0 +1,13 @@
++const mongoose = require("mongoose");
++
++const userSchema = new mongoose.Schema(
++    {
++        name: { type: String, required: true },
++        email: { type: String, required: true, unique: true },
++        passwordHash: { type: String, required: true },
++        role: { type: String, enum: ["admin", "user"], default: "user" },
++    },
++    { timestamps: true }
++);
++
++module.exports = mongoose.model("User", userSchema);
+\ No newline at end of file
+diff --git a/backend/routes/auth.js b/backend/routes/auth.js
+index e69de29..e02f2d0 100644
+--- a/backend/routes/auth.js
++++ b/backend/routes/auth.js
+@@ -0,0 +1,8 @@
++const express = require("express");
++const router = express.Router();
++
++router.get("/test", (req, res) => {
++    res.send("auth route working ✅");
++});
++
++module.exports = router;
+\ No newline at end of file
+diff --git a/backend/routes/users.js b/backend/routes/users.js
+index e69de29..546ea6e 100644
+--- a/backend/routes/users.js
++++ b/backend/routes/users.js
+@@ -0,0 +1,15 @@
++const express = require("express");
++const User = require("../models/User");
++const { auth, adminOnly } = require("../middleware/auth");
++
++const router = express.Router();
++
++// test route (optional)
++router.get("/test", (req, res) => res.send("users route ok ✅"));
++
++router.get("/", auth, adminOnly, async (req, res) => {
++    const users = await User.find().select("-passwordHash").sort({ createdAt: -1 });
++    res.json(users);
++});
++
++module.exports = router; // ✅ MUST BE HERE
+\ No newline at end of file
+diff --git a/backend/server.js b/backend/server.js
+index 4e7f556..3c9dc74 100644
+--- a/backend/server.js
++++ b/backend/server.js
+@@ -3,8 +3,11 @@ const cors = require("cors");
+ const mongoose = require("mongoose");
+ require("dotenv").config();
+ 
++
+ const authRoutes = require("./routes/auth");
+ const userRoutes = require("./routes/users");
++console.log("authRoutes =", authRoutes);
++console.log("userRoutes =", userRoutes);
+ 
+ const app = express();
+ app.use(cors());
