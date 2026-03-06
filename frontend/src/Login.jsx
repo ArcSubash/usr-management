@@ -54,14 +54,54 @@ export default function Login({ onLogin }) {
 
     // Mouse-tracking state
     const containerRef = useRef(null);
+    const smoothPos = useRef({ x: 0.5, y: 0.5 });
     const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+    const animFrame = useRef(null);
+
+    // Trail state (6 trailing dots)
+    const TRAIL_COUNT = 6;
+    const trailRefs = useRef([]);
+    const trailPositions = useRef(
+        Array.from({ length: TRAIL_COUNT }, () => ({ x: 0.5, y: 0.5 }))
+    );
 
     const handleMouseMove = useCallback((e) => {
         if (!containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
         const x = (e.clientX - rect.left) / rect.width;
         const y = (e.clientY - rect.top) / rect.height;
-        setMousePos({ x, y });
+        smoothPos.current = { x, y };
+    }, []);
+
+    // Smooth animation loop for buttery mouse tracking + trails
+    useEffect(() => {
+        let running = true;
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const trailSpeeds = [0.12, 0.09, 0.065, 0.045, 0.03, 0.02];
+        const tick = () => {
+            setMousePos((prev) => ({
+                x: lerp(prev.x, smoothPos.current.x, 0.2),
+                y: lerp(prev.y, smoothPos.current.y, 0.2),
+            }));
+
+            // Update trail positions (each follows the one ahead of it)
+            for (let i = 0; i < TRAIL_COUNT; i++) {
+                const target = i === 0 ? smoothPos.current : trailPositions.current[i - 1];
+                trailPositions.current[i] = {
+                    x: lerp(trailPositions.current[i].x, target.x, trailSpeeds[i]),
+                    y: lerp(trailPositions.current[i].y, target.y, trailSpeeds[i]),
+                };
+                // Direct DOM update to avoid re-renders
+                if (trailRefs.current[i]) {
+                    trailRefs.current[i].style.left = `${trailPositions.current[i].x * 100}%`;
+                    trailRefs.current[i].style.top = `${trailPositions.current[i].y * 100}%`;
+                }
+            }
+
+            if (running) animFrame.current = requestAnimationFrame(tick);
+        };
+        animFrame.current = requestAnimationFrame(tick);
+        return () => { running = false; cancelAnimationFrame(animFrame.current); };
     }, []);
 
     useEffect(() => {
@@ -72,13 +112,25 @@ export default function Login({ onLogin }) {
     }, [handleMouseMove]);
 
     // Compute orb transforms from mouse position
-    const orbStyle = (factor, baseX, baseY) => {
+    const orbStyle = (factor) => {
         const tx = (mousePos.x - 0.5) * factor;
         const ty = (mousePos.y - 0.5) * factor;
-        return {
-            transform: `translate(${baseX + tx}px, ${baseY + ty}px)`,
-        };
+        return { transform: `translate(${tx}px, ${ty}px)` };
     };
+
+    // 3D card tilt based on mouse position
+    const cardTilt = {
+        transform: `perspective(800px) rotateY(${(mousePos.x - 0.5) * 8}deg) rotateX(${(mousePos.y - 0.5) * -8}deg)`,
+    };
+
+    // Dynamic border glow color based on mouse position
+    const glowHue = Math.round(mousePos.x * 60 + 220); // shifts between blue → purple
+    const cardGlowStyle = {
+        boxShadow: `0 15px 35px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 40px hsla(${glowHue}, 70%, 50%, 0.12)`,
+    };
+
+    // Floating particles data
+    const particles = [1, 2, 3, 4, 5, 6, 7, 8];
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -148,7 +200,7 @@ export default function Login({ onLogin }) {
 
     return (
         <div className="login-container" ref={containerRef}>
-            {/* Radial glow that follows the mouse */}
+            {/* Dual-layer radial glow that follows the mouse */}
             <div
                 className="mouse-glow"
                 style={{
@@ -156,18 +208,48 @@ export default function Login({ onLogin }) {
                     top: `${mousePos.y * 100}%`,
                 }}
             />
+            <div
+                className="mouse-glow-accent"
+                style={{
+                    left: `${mousePos.x * 100}%`,
+                    top: `${mousePos.y * 100}%`,
+                }}
+            />
 
-            {/* Floating orbs that react to mouse with parallax depth */}
-            <div className="orb orb-1" style={orbStyle(120, 0, 0)} />
-            <div className="orb orb-2" style={orbStyle(80, 0, 0)} />
-            <div className="orb orb-3" style={orbStyle(200, 0, 0)} />
-            <div className="orb orb-4" style={orbStyle(60, 0, 0)} />
-            <div className="orb orb-5" style={orbStyle(150, 0, 0)} />
+            {/* Mouse trail dots */}
+            {Array.from({ length: TRAIL_COUNT }, (_, i) => (
+                <div
+                    key={`trail-${i}`}
+                    ref={(el) => (trailRefs.current[i] = el)}
+                    className={`trail-dot trail-dot-${i}`}
+                />
+            ))}
 
-            {/* Grid overlay */}
-            <div className="grid-overlay" />
+            {/* Floating orbs with enhanced parallax */}
+            <div className="orb orb-1" style={orbStyle(180)} />
+            <div className="orb orb-2" style={orbStyle(120)} />
+            <div className="orb orb-3" style={orbStyle(280)} />
+            <div className="orb orb-4" style={orbStyle(90)} />
+            <div className="orb orb-5" style={orbStyle(220)} />
 
-            <div className="login-card">
+            {/* Floating particles */}
+            {particles.map((i) => (
+                <div
+                    key={i}
+                    className={`particle particle-${i}`}
+                    style={orbStyle(40 + i * 25)}
+                />
+            ))}
+
+            {/* Grid overlay with parallax */}
+            <div
+                className="grid-overlay"
+                style={{
+                    transform: `translate(${(mousePos.x - 0.5) * -15}px, ${(mousePos.y - 0.5) * -15}px)`,
+                }}
+            />
+
+            <div className="login-card" style={{ ...cardTilt, ...cardGlowStyle }}>
                 <h2 className="login-title">{isRegistering ? "Create Account" : "Welcome Back"}</h2>
 
                 {successMessage && <div className="success-message">{successMessage}</div>}
