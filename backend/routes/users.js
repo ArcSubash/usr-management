@@ -49,6 +49,32 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
   }
 });
 
+// Admin: update a user
+router.put("/:id", auth, adminOnly, async (req, res) => {
+  try {
+    const { name, password } = req.body;
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (name) user.name = name;
+    if (password) {
+      user.passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    await user.save();
+
+    // Do not send passwordHash back
+    res.json({
+      message: "User updated ✅",
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (err) {
+    console.log("UPDATE USER ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // User: update own profile
 router.put("/profile", auth, async (req, res) => {
   try {

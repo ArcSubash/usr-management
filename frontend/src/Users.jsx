@@ -5,10 +5,20 @@ import "./Users.css";
 export default function Users({ user, onLogout }) {
     const [users, setUsers] = useState([]);
     const [error, setError] = useState("");
+
+    // Create User States
     const [newName, setNewName] = useState("");
     const [newEmail, setNewEmail] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [newRole, setNewRole] = useState("user");
+
+    // Edit User States
+    const [editingUser, setEditingUser] = useState(null);
+    const [editName, setEditName] = useState("");
+    const [editPassword, setEditPassword] = useState("");
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState("");
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     async function loadUsers() {
         setError("");
@@ -18,6 +28,12 @@ export default function Users({ user, onLogout }) {
         } catch (err) {
             setError(err?.response?.data?.message || "Failed to fetch users");
         }
+    }
+
+    async function handleRefresh() {
+        setIsRefreshing(true);
+        await loadUsers();
+        setTimeout(() => setIsRefreshing(false), 600);
     }
 
     async function createUser(e) {
@@ -38,6 +54,40 @@ export default function Users({ user, onLogout }) {
             loadUsers(); // refresh list
         } catch (err) {
             setError(err?.response?.data?.message || "Create user failed");
+        }
+    }
+
+    const openEditModal = (u) => {
+        setEditingUser(u);
+        setEditName(u.name);
+        setEditPassword("");
+        setEditError("");
+    };
+
+    const closeEditModal = () => {
+        setEditingUser(null);
+        setEditName("");
+        setEditPassword("");
+        setEditError("");
+    };
+
+    async function handleEditUser(e) {
+        e.preventDefault();
+        setEditError("");
+        setEditLoading(true);
+
+        try {
+            const data = { name: editName };
+            if (editPassword) data.password = editPassword;
+
+            await api.put(`/users/${editingUser._id}`, data);
+
+            closeEditModal();
+            loadUsers();
+        } catch (err) {
+            setEditError(err?.response?.data?.message || "Failed to update user");
+        } finally {
+            setEditLoading(false);
         }
     }
 
@@ -118,8 +168,11 @@ export default function Users({ user, onLogout }) {
                 <section className="panel" style={{ overflow: 'hidden' }}>
                     <div className="panel-title">
                         <span>Managed Users ({users.length})</span>
-                        <button onClick={loadUsers} className="btn-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <button onClick={handleRefresh} className="btn-icon">
+                            <svg
+                                className={isRefreshing ? "spin-animation" : ""}
+                                width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                            >
                                 <polyline points="23 4 23 10 17 10"></polyline>
                                 <polyline points="1 20 1 14 7 14"></polyline>
                                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
@@ -163,23 +216,32 @@ export default function Users({ user, onLogout }) {
                                                 </span>
                                             </td>
                                             <td>{u.createdAt ? formatDate(u.createdAt) : '-'}</td>
-                                            <td style={{ textAlign: "right" }}>
+                                            <td style={{ textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
                                                 {u._id !== user.id && (
-                                                    <button
-                                                        className="btn-danger"
-                                                        onClick={async () => {
-                                                            if (!confirm(`Are you sure you want to permanently delete ${u.name}?`)) return;
+                                                    <>
+                                                        <button
+                                                            className="btn-secondary"
+                                                            style={{ padding: "0.4rem 0.8rem", color: "#3B82F6", borderColor: "rgba(59, 130, 246, 0.3)" }}
+                                                            onClick={() => openEditModal(u)}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            className="btn-danger"
+                                                            onClick={async () => {
+                                                                if (!confirm(`Are you sure you want to permanently delete ${u.name}?`)) return;
 
-                                                            try {
-                                                                await api.delete(`/users/${u._id}`);
-                                                                loadUsers();
-                                                            } catch (err) {
-                                                                setError(err?.response?.data?.message || "Delete failed");
-                                                            }
-                                                        }}
-                                                    >
-                                                        Remove
-                                                    </button>
+                                                                try {
+                                                                    await api.delete(`/users/${u._id}`);
+                                                                    loadUsers();
+                                                                } catch (err) {
+                                                                    setError(err?.response?.data?.message || "Delete failed");
+                                                                }
+                                                            }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </>
                                                 )}
                                             </td>
                                         </tr>
@@ -190,6 +252,71 @@ export default function Users({ user, onLogout }) {
                     </div>
                 </section>
             </main>
+
+            {/* Admin Edit User Modal */}
+            {editingUser && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3 className="modal-title">Edit User</h3>
+
+                        {editError && <div className="dash-error">{editError}</div>}
+
+                        <form onSubmit={handleEditUser}>
+                            <div className="input-group">
+                                <label className="input-label">Email Address</label>
+                                <input
+                                    className="form-input"
+                                    type="email"
+                                    value={editingUser.email}
+                                    disabled
+                                    style={{ opacity: 0.6, cursor: "not-allowed" }}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label className="input-label">Full Name</label>
+                                <input
+                                    className="form-input"
+                                    placeholder="User's Name"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label className="input-label">New Password (optional)</label>
+                                <input
+                                    className="form-input"
+                                    placeholder="Leave blank to keep unchanged"
+                                    type="password"
+                                    value={editPassword}
+                                    onChange={(e) => setEditPassword(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="modal-actions">
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    onClick={closeEditModal}
+                                    disabled={editLoading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    style={{ margin: 0 }}
+                                    disabled={editLoading || !editName}
+                                >
+                                    {editLoading ? "Saving..." : "Save Changes"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
