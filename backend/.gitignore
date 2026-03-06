@@ -1,2 +1,6 @@
 .env
 node_modules
+*.log
+out.txt
+diff.txt
+gs.txt
