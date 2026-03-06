@@ -104,8 +104,8 @@ Admin can:
 
 ## 1. Clone the repository
 
-    git clone <your-repository-url>
-    cd project
+    git clone https://github.com/ArcSubash/usr-management.git
+    cd usr-management
 
 ------------------------------------------------------------------------
 
