@@ -8,7 +8,7 @@ This project allows administrators to manage users securely through a
 dashboard.
 
 ------------------------------------------------------------------------
-# FIRSTLY MODIFY THE .env.exmaple file content with your mongodb connection string and other details and rename it to `.env`
+# FIRSTLY MODIFY THE `.env.example` file's content with your mongodb connection string and other details and rename it to `.env`
 ------------------------------------------------------------------------
 
 # Demo Workflow
