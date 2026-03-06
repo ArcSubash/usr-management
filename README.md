@@ -77,6 +77,8 @@ Admin can:
     ├ backend
     │   ├ models
     │   │   └ User.js
+    │   |   └ OTP.js
+    │   │ 
     │   │
     │   ├ routes
     │   │   ├ auth.js
