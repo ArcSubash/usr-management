@@ -67,7 +67,13 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
     // Do not send passwordHash back
     res.json({
       message: "User updated ✅",
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
     });
   } catch (err) {
     console.log("UPDATE USER ERROR:", err);
@@ -105,7 +111,13 @@ router.put("/profile", auth, async (req, res) => {
 
     res.json({
       message: "Profile updated successfully ✅",
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
     });
   } catch (err) {
     console.log("UPDATE PROFILE ERROR:", err);
