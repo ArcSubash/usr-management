@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-
+import "./Users.css";
 
 export default function Users({ user, onLogout }) {
     const [users, setUsers] = useState([]);
@@ -19,6 +19,7 @@ export default function Users({ user, onLogout }) {
             setError(err?.response?.data?.message || "Failed to fetch users");
         }
     }
+
     async function createUser(e) {
         e.preventDefault();
         setError("");
@@ -41,96 +42,154 @@ export default function Users({ user, onLogout }) {
     }
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadUsers();
     }, []);
 
+    // Format date string nicely
+    const formatDate = (dateString) => {
+        try {
+            const d = new Date(dateString);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch {
+            return dateString;
+        }
+    };
+
     return (
-        <div style={{ maxWidth: 800, margin: "40px auto", fontFamily: "Arial" }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <h2>Dashboard</h2>
-                <button onClick={onLogout} style={{ padding: "8px 12px" }}>
-                    Logout
-                </button>
-            </div>
+        <div className="dashboard-container">
+            <header className="dashboard-header">
+                <h2 className="dashboard-title">⚡ App Dash</h2>
 
-            <p>
-                Logged in as: <b>{user?.name}</b> ({user?.role})
-            </p>
-
-            <button onClick={loadUsers} style={{ padding: "8px 12px" }}>
-                Refresh Users
-            </button>
-
-            {error && <p style={{ color: "red" }}>{error}</p>}
-
-            <div style={{ marginTop: 16 }}>
-                <h3 style={{ marginTop: 20 }}>Create User</h3>
-
-                <form onSubmit={createUser} style={{ display: "grid", gap: 10, maxWidth: 420 }}>
-                    <input
-                        placeholder="Name"
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        style={{ padding: 10 }}
-                    />
-                    <input
-                        placeholder="Email"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                        style={{ padding: 10 }}
-                    />
-                    <input
-                        placeholder="Password"
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        style={{ padding: 10 }}
-                    />
-
-                    <select value={newRole} onChange={(e) => setNewRole(e.target.value)} style={{ padding: 10 }}>
-                        <option value="user">user</option>
-                        <option value="admin">admin</option>
-                    </select>
-
-                    <button type="submit" style={{ padding: 10, cursor: "pointer" }}>
-                        Create
+                <div className="user-info">
+                    <span className="user-greeting">
+                        Hello, <b>{user?.name}</b> <span className="role-badge">{user?.role}</span>
+                    </span>
+                    <button onClick={onLogout} className="btn-logout">
+                        Logout
                     </button>
-                </form>
-                <table border="1" cellPadding="10" style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Action</th>
-                            <th>Created</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {users.map((u) => (
-                            <tr key={u._id}>
-                                <td>{u.name}</td>
-                                <td>{u.email}</td>
-                                <td>{u.role}</td>
+                </div>
+            </header>
 
-                                <td>
-                                    <button
-                                        onClick={async () => {
-                                            if (!confirm("Delete this user?")) return;
+            <main className="dashboard-content">
+                <section className="panel">
+                    <h3 className="panel-title">Add New User</h3>
 
-                                            await api.delete(`/users/${u._id}`);
-                                            loadUsers(); // refresh list
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
+                    <form onSubmit={createUser} className="create-form">
+                        <input
+                            className="form-input"
+                            placeholder="Full Name"
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            required
+                        />
+                        <input
+                            className="form-input"
+                            placeholder="Email Address"
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            required
+                        />
+                        <input
+                            className="form-input"
+                            placeholder="Secure Password"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            required
+                        />
 
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        <select
+                            className="form-select"
+                            value={newRole}
+                            onChange={(e) => setNewRole(e.target.value)}
+                        >
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+
+                        <button type="submit" className="btn-primary">
+                            Create User Account
+                        </button>
+                    </form>
+                </section>
+
+                <section className="panel" style={{ overflow: 'hidden' }}>
+                    <div className="panel-title">
+                        <span>Managed Users ({users.length})</span>
+                        <button onClick={loadUsers} className="btn-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+
+                    {error && <div className="dash-error">{error}</div>}
+
+                    <div className="table-container">
+                        <table className="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Registered</th>
+                                    <th style={{ textAlign: "right" }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {users.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="5" style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+                                            No users found. Loading...
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    users.map((u) => (
+                                        <tr key={u._id}>
+                                            <td style={{ fontWeight: 500, color: "#f8fafc" }}>{u.name}</td>
+                                            <td>{u.email}</td>
+                                            <td>
+                                                <span className="role-badge" style={{
+                                                    background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : undefined,
+                                                    color: u.role === 'admin' ? '#c4b5fd' : undefined,
+                                                    borderColor: u.role === 'admin' ? 'rgba(139, 92, 246, 0.3)' : undefined
+                                                }}>
+                                                    {u.role}
+                                                </span>
+                                            </td>
+                                            <td>{u.createdAt ? formatDate(u.createdAt) : '-'}</td>
+                                            <td style={{ textAlign: "right" }}>
+                                                {u._id !== user.id && (
+                                                    <button
+                                                        className="btn-danger"
+                                                        onClick={async () => {
+                                                            if (!confirm(`Are you sure you want to permanently delete ${u.name}?`)) return;
+
+                                                            try {
+                                                                await api.delete(`/users/${u._id}`);
+                                                                loadUsers();
+                                                            } catch (err) {
+                                                                setError(err?.response?.data?.message || "Delete failed");
+                                                            }
+                                                        }}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
         </div>
     );
 }

@@ -1,65 +1,120 @@
 import { useState } from "react";
 import { api } from "./api";
+import "./Login.css";
 
 export default function Login({ onLogin }) {
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("admin@test.com");
     const [password, setPassword] = useState("admin123");
     const [error, setError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError("");
+        setSuccessMessage("");
         setLoading(true);
+
         try {
-            const res = await api.post("/auth/login", { email, password });
-            // save token
-            localStorage.setItem("token", res.data.token);
-            localStorage.setItem("user", JSON.stringify(res.data.user));
-            onLogin(res.data.user);
+            if (isRegistering) {
+                // Handle Registration
+                await api.post("/auth/register", { name, email, password });
+                setSuccessMessage("Account created successfully! Please log in.");
+                setIsRegistering(false);
+                // We keep the email and password so the user can just click login.
+            } else {
+                // Handle Login
+                const res = await api.post("/auth/login", { email, password });
+                // save token
+                localStorage.setItem("token", res.data.token);
+                localStorage.setItem("user", JSON.stringify(res.data.user));
+                onLogin(res.data.user);
+            }
         } catch (err) {
-            setError(err?.response?.data?.message || "Login failed");
+            setError(err?.response?.data?.message || (isRegistering ? "Registration failed" : "Login failed"));
         } finally {
             setLoading(false);
         }
     }
 
+    const toggleMode = () => {
+        setIsRegistering(!isRegistering);
+        setError("");
+        setSuccessMessage("");
+        if (!isRegistering) {
+            // When switching to register, clear demo credentials
+            setEmail("");
+            setPassword("");
+        }
+    };
+
     return (
-        <div style={{ maxWidth: 360, margin: "60px auto", fontFamily: "Arial" }}>
-            <h2>Login</h2>
+        <div className="login-container">
+            <div className="login-card">
+                <h2 className="login-title">{isRegistering ? "Create Account" : "Welcome Back"}</h2>
 
-            <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: 12 }}>
-                    <label>Email</label>
-                    <input
-                        style={{ width: "100%", padding: 10, marginTop: 6 }}
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="admin@test.com"
-                    />
-                </div>
+                {successMessage && <div className="success-message">{successMessage}</div>}
 
-                <div style={{ marginBottom: 12 }}>
-                    <label>Password</label>
-                    <input
-                        style={{ width: "100%", padding: 10, marginTop: 6 }}
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="admin123"
-                    />
-                </div>
+                <form onSubmit={handleSubmit}>
+                    {isRegistering && (
+                        <div className="input-group">
+                            <label className="input-label">Name</label>
+                            <input
+                                className="login-input"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Your Name"
+                                required={isRegistering}
+                            />
+                        </div>
+                    )}
 
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                    <div className="input-group">
+                        <label className="input-label">Email</label>
+                        <input
+                            className="login-input"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder={isRegistering ? "you@example.com" : "admin@test.com"}
+                            required
+                        />
+                    </div>
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    style={{ width: "100%", padding: 10, cursor: "pointer" }}
-                >
-                    {loading ? "Logging in..." : "Login"}
-                </button>
-            </form>
+                    <div className="input-group">
+                        <label className="input-label">Password</label>
+                        <input
+                            className="login-input"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                        />
+                    </div>
+
+                    {error && <div className="error-message">{error}</div>}
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="login-button"
+                    >
+                        {loading
+                            ? (isRegistering ? "Creating..." : "Logging in...")
+                            : (isRegistering ? "Sign Up" : "Login")}
+                    </button>
+
+                    <div className="toggle-mode">
+                        {isRegistering ? "Already have an account?" : "Don't have an account?"}
+                        <button type="button" onClick={toggleMode} className="toggle-button">
+                            {isRegistering ? "Log in" : "Sign up"}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }
