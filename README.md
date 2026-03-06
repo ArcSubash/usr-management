@@ -23,7 +23,7 @@ dashboard.
 
 ## Authentication
 
--   User registration
+-   User registration via OTP
 -   Secure login using JWT
 -   Password hashing using bcrypt
 
