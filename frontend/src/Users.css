@@ -101,6 +101,7 @@
     border-radius: 16px;
     padding: 1.5rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    align-self: start;
 }
 
 .panel-title {
