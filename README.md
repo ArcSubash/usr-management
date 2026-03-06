@@ -10,14 +10,63 @@ dashboard.
 ------------------------------------------------------------------------
 # FIRSTLY MODIFY THE `.env.example` file's content with your mongodb connection string and other details and rename it to `.env`
 ------------------------------------------------------------------------
+# Application Deployment Workflow
 
-# Demo Workflow
+1. Clone the repository from GitHub.
 
-1.  Start backend
-2.  Start frontend
-3.  Login using default admin
-4.  Open dashboard
-5.  Create or delete users
+2. Configure environment variables by modifying the `.env.example` file's content  and renaming it to `.env`.
+
+3. Install backend dependencies and start the backend server.
+
+4. Install frontend dependencies and start the frontend development server.
+
+5. The frontend communicates with the backend REST API using Axios.
+
+6. The backend connects to MongoDB Atlas for data storage.
+
+7. After the server starts, a default admin account is automatically created.
+
+8. The administrator can log in and manage users through the dashboard.
+
+------------------------------------------------------------------------
+# System Architecture
+
+The application follows a **three-tier architecture** consisting of the frontend, backend, and database layers.
+
+## Frontend Layer
+The frontend is built using **React with Vite**.
+
+Responsibilities:
+- Provides the user interface
+- Handles login and dashboard views
+- Sends API requests to the backend using Axios
+
+## Backend Layer
+The backend is built using **Node.js and Express.js**.
+
+Responsibilities:
+- Provides REST API endpoints
+- Handles authentication and authorization
+- Implements business logic for user management
+- Validates requests and protects routes using JWT middleware
+
+## Database Layer
+The system uses **MongoDB Atlas** as the database.
+
+Responsibilities:
+- Stores user account information
+- Stores OTP verification data
+- Stores hashed passwords
+
+The backend interacts with MongoDB using **Mongoose ODM**.
+
+## Authentication Flow
+
+1. User logs in using email and password.
+2. Backend verifies the credentials.
+3. A **JWT token** is generated and returned to the client.
+4. The client stores the token and sends it with protected requests.
+5. The backend middleware verifies the token before granting access to protected routes.
 
 ------------------------------------------------------------------------
 
