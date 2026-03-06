@@ -1,21 +1,52 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const OTP = require("../models/OTP");
 const sendEmail = require("../utils/sendEmail");
 
 const router = express.Router();
 
+// Reusable email validation chain
+const emailValidation = [
+    body("email")
+        .trim()
+        .notEmpty().withMessage("Email is required")
+        .isEmail().withMessage("Please enter a valid email address")
+        .custom((email) => {
+            const [localPart, domainPart] = email.split("@");
+            if (localPart.length < 3) {
+                throw new Error("Email username must be at least 3 characters");
+            }
+            const domainName = domainPart.split(".")[0];
+            if (domainName.length < 2) {
+                throw new Error("Email domain name is too short");
+            }
+            return true;
+        })
+        .normalizeEmail(),
+];
+
+// Middleware to check validation results
+function handleValidationErrors(req, res, next) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            message: errors.array()[0].msg,
+            errors: errors.array(),
+        });
+    }
+    next();
+}
+
 // SEND OTP
-router.post("/send-otp", async (req, res) => {
+router.post("/send-otp", emailValidation, handleValidationErrors, async (req, res) => {
     try {
         const { email } = req.body;
 
-        if (!email) return res.status(400).json({ message: "Email is required" });
-
         const exists = await User.findOne({ email });
-        if (exists) return res.status(400).json({ message: "Email already exists" });
+        if (exists) return res.status(409).json({ message: "Email already registered" });
 
         // Generate 6 digit random number
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -38,16 +69,27 @@ router.post("/send-otp", async (req, res) => {
 });
 
 // REGISTER
-router.post("/register", async (req, res) => {
+router.post("/register", emailValidation, handleValidationErrors, async (req, res) => {
     try {
         const { name, email, password, otp } = req.body;
 
-        if (!name || !email || !password || !otp) {
+        if (!name || !password || !otp) {
             return res.status(400).json({ message: "All fields including OTP are required" });
         }
 
+        // Password validation: min 6 chars, alphanumeric
+        if (password.length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters" });
+        }
+        if (!/[a-zA-Z]/.test(password)) {
+            return res.status(400).json({ message: "Password must contain at least one letter" });
+        }
+        if (!/[0-9]/.test(password)) {
+            return res.status(400).json({ message: "Password must contain at least one number" });
+        }
+
         const exists = await User.findOne({ email });
-        if (exists) return res.status(400).json({ message: "Email already exists" });
+        if (exists) return res.status(409).json({ message: "Email already registered" });
 
         // Verify OTP
         const otpRecord = await OTP.findOne({ email });
@@ -61,7 +103,7 @@ router.post("/register", async (req, res) => {
         const passwordHash = await bcrypt.hash(password, 10);
 
         const user = await User.create({
-            name,
+            name: name.trim(),
             email,
             passwordHash,
             role: "user",
@@ -78,7 +120,7 @@ router.post("/register", async (req, res) => {
 });
 
 // LOGIN
-router.post("/login", async (req, res) => {
+router.post("/login", emailValidation, handleValidationErrors, async (req, res) => {
     try {
         const { email, password } = req.body;
 

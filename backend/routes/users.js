@@ -16,18 +16,51 @@ router.post("/", auth, adminOnly, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
+    // Required fields
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "name, email, password required" });
+      return res.status(400).json({ message: "Name, email, and password are required" });
     }
 
-    const exists = await User.findOne({ email });
+    // Name validation
+    const trimmedName = name.trim();
+    if (trimmedName.length < 2) {
+      return res.status(400).json({ message: "Name must be at least 2 characters" });
+    }
+    if (trimmedName.length > 50) {
+      return res.status(400).json({ message: "Name must be under 50 characters" });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Please provide a valid email address" });
+    }
+
+    // Password validation: min 6 chars, alphanumeric (at least one letter + one number)
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+      return res.status(400).json({ message: "Password must contain at least one letter" });
+    }
+    if (!/[0-9]/.test(password)) {
+      return res.status(400).json({ message: "Password must contain at least one number" });
+    }
+
+    // Role validation
+    const validRoles = ["admin", "user"];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({ message: "Role must be 'admin' or 'user'" });
+    }
+
+    const exists = await User.findOne({ email: email.trim().toLowerCase() });
     if (exists) return res.status(400).json({ message: "Email already exists" });
 
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
-      email,
+      name: trimmedName,
+      email: email.trim().toLowerCase(),
       passwordHash,
       role: role || "user",
     });
@@ -49,39 +82,7 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
   }
 });
 
-// Admin: update a user
-router.put("/:id", auth, adminOnly, async (req, res) => {
-  try {
-    const { name, password } = req.body;
-
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (name) user.name = name;
-    if (password) {
-      user.passwordHash = await bcrypt.hash(password, 10);
-    }
-
-    await user.save();
-
-    // Do not send passwordHash back
-    res.json({
-      message: "User updated ✅",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt
-      }
-    });
-  } catch (err) {
-    console.log("UPDATE USER ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// User: update own profile
+// User: update own profile (MUST be before /:id to avoid matching "profile" as an id)
 router.put("/profile", auth, async (req, res) => {
   try {
     const { name, currentPassword, password } = req.body;
@@ -121,6 +122,46 @@ router.put("/profile", auth, async (req, res) => {
     });
   } catch (err) {
     console.log("UPDATE PROFILE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Admin: update a user
+router.put("/:id", auth, adminOnly, async (req, res) => {
+  try {
+    const { name, password, role } = req.body;
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Prevent admin from changing their own role
+    if (role && req.user.id === req.params.id) {
+      return res.status(400).json({ message: "You cannot change your own role" });
+    }
+
+    if (name) user.name = name;
+    if (password) {
+      user.passwordHash = await bcrypt.hash(password, 10);
+    }
+    if (role && ["admin", "user"].includes(role)) {
+      user.role = role;
+    }
+
+    await user.save();
+
+    // Do not send passwordHash back
+    res.json({
+      message: "User updated ✅",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (err) {
+    console.log("UPDATE USER ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

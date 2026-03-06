@@ -11,14 +11,20 @@ export default function Users({ user, onLogout }) {
     const [newEmail, setNewEmail] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [newRole, setNewRole] = useState("user");
+    const [createLoading, setCreateLoading] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
 
     // Edit User States
     const [editingUser, setEditingUser] = useState(null);
     const [editName, setEditName] = useState("");
     const [editPassword, setEditPassword] = useState("");
+    const [editRole, setEditRole] = useState("user");
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState("");
     const [isRefreshing, setIsRefreshing] = useState(false);
+
+    // Confirmation popup state
+    const [confirmPopup, setConfirmPopup] = useState(null);
 
     async function loadUsers() {
         setError("");
@@ -36,13 +42,75 @@ export default function Users({ user, onLogout }) {
         setTimeout(() => setIsRefreshing(false), 600);
     }
 
+    // Validation helpers
+    const validateName = (name) => {
+        if (!name.trim()) return "Name is required";
+        if (name.trim().length < 2) return "Name must be at least 2 characters";
+        if (name.trim().length > 50) return "Name must be under 50 characters";
+        return "";
+    };
+
+    const validateEmail = (email) => {
+        if (!email.trim()) return "Email is required";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) return "Please enter a valid email address";
+        // Stricter business-rule validation
+        const [localPart, domainPart] = email.split("@");
+        if (localPart.length < 3) return "Email username must be at least 3 characters";
+        const domainName = domainPart.split(".")[0];
+        if (domainName.length < 2) return "Email domain name is too short";
+        return "";
+    };
+
+    const validatePassword = (password) => {
+        if (!password) return "Password is required";
+        if (password.length < 6) return "Password must be at least 6 characters";
+        if (!/[a-zA-Z]/.test(password)) return "Must contain at least one letter";
+        if (!/[0-9]/.test(password)) return "Must contain at least one number";
+        return "";
+    };
+
+    const handleNameChange = (val) => {
+        setNewName(val);
+        setFieldErrors((prev) => ({ ...prev, name: val ? validateName(val) : "" }));
+    };
+
+    const handleEmailChange = (val) => {
+        setNewEmail(val);
+        setFieldErrors((prev) => ({ ...prev, email: val ? validateEmail(val) : "" }));
+    };
+
+    const handlePasswordChange = (val) => {
+        setNewPassword(val);
+        setFieldErrors((prev) => ({ ...prev, password: val ? validatePassword(val) : "" }));
+    };
+
+    const isFormValid = newName.trim().length >= 2
+        && !validateEmail(newEmail)
+        && newEmail.trim().length > 0
+        && newPassword.length >= 6
+        && /[a-zA-Z]/.test(newPassword)
+        && /[0-9]/.test(newPassword);
+
     async function createUser(e) {
         e.preventDefault();
         setError("");
+
+        // Run all validations
+        const errors = {
+            name: validateName(newName),
+            email: validateEmail(newEmail),
+            password: validatePassword(newPassword),
+        };
+        setFieldErrors(errors);
+
+        if (errors.name || errors.email || errors.password) return;
+
+        setCreateLoading(true);
         try {
             await api.post("/users", {
-                name: newName,
-                email: newEmail,
+                name: newName.trim(),
+                email: newEmail.trim().toLowerCase(),
                 password: newPassword,
                 role: newRole,
             });
@@ -51,9 +119,12 @@ export default function Users({ user, onLogout }) {
             setNewEmail("");
             setNewPassword("");
             setNewRole("user");
+            setFieldErrors({});
             loadUsers(); // refresh list
         } catch (err) {
             setError(err?.response?.data?.message || "Create user failed");
+        } finally {
+            setCreateLoading(false);
         }
     }
 
@@ -61,6 +132,7 @@ export default function Users({ user, onLogout }) {
         setEditingUser(u);
         setEditName(u.name);
         setEditPassword("");
+        setEditRole(u.role);
         setEditError("");
     };
 
@@ -68,6 +140,7 @@ export default function Users({ user, onLogout }) {
         setEditingUser(null);
         setEditName("");
         setEditPassword("");
+        setEditRole("user");
         setEditError("");
     };
 
@@ -77,7 +150,7 @@ export default function Users({ user, onLogout }) {
         setEditLoading(true);
 
         try {
-            const data = { name: editName };
+            const data = { name: editName, role: editRole };
             if (editPassword) data.password = editPassword;
 
             await api.put(`/users/${editingUser._id}`, data);
@@ -126,29 +199,38 @@ export default function Users({ user, onLogout }) {
                     <h3 className="panel-title">Add New User</h3>
 
                     <form onSubmit={createUser} className="create-form">
-                        <input
-                            className="form-input"
-                            placeholder="Full Name"
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            required
-                        />
-                        <input
-                            className="form-input"
-                            placeholder="Email Address"
-                            type="email"
-                            value={newEmail}
-                            onChange={(e) => setNewEmail(e.target.value)}
-                            required
-                        />
-                        <input
-                            className="form-input"
-                            placeholder="Secure Password"
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            required
-                        />
+                        <div className="validated-field">
+                            <input
+                                className={`form-input ${fieldErrors.name ? 'input-error' : (newName && !validateName(newName) ? 'input-valid' : '')}`}
+                                placeholder="Full Name"
+                                value={newName}
+                                onChange={(e) => handleNameChange(e.target.value)}
+                            />
+                            {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
+                        </div>
+                        <div className="validated-field">
+                            <input
+                                className={`form-input ${fieldErrors.email ? 'input-error' : (newEmail && !validateEmail(newEmail) ? 'input-valid' : '')}`}
+                                placeholder="Email Address"
+                                type="email"
+                                value={newEmail}
+                                onChange={(e) => handleEmailChange(e.target.value)}
+                            />
+                            {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+                        </div>
+                        <div className="validated-field">
+                            <input
+                                className={`form-input ${fieldErrors.password ? 'input-error' : (newPassword && !validatePassword(newPassword) ? 'input-valid' : '')}`}
+                                placeholder="Secure Password"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => handlePasswordChange(e.target.value)}
+                            />
+                            {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+                            {newPassword && !fieldErrors.password && (
+                                <span className="field-hint">✓ Strong password</span>
+                            )}
+                        </div>
 
                         <select
                             className="form-select"
@@ -159,8 +241,12 @@ export default function Users({ user, onLogout }) {
                             <option value="admin">Admin</option>
                         </select>
 
-                        <button type="submit" className="btn-primary">
-                            Create User Account
+                        <button
+                            type="submit"
+                            className="btn-primary"
+                            disabled={createLoading || !isFormValid}
+                        >
+                            {createLoading ? "Creating..." : "Create User Account"}
                         </button>
                     </form>
                 </section>
@@ -207,13 +293,51 @@ export default function Users({ user, onLogout }) {
                                             <td style={{ fontWeight: 500, color: "#f8fafc" }}>{u.name}</td>
                                             <td>{u.email}</td>
                                             <td>
-                                                <span className="role-badge" style={{
-                                                    background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : undefined,
-                                                    color: u.role === 'admin' ? '#c4b5fd' : undefined,
-                                                    borderColor: u.role === 'admin' ? 'rgba(139, 92, 246, 0.3)' : undefined
-                                                }}>
-                                                    {u.role}
-                                                </span>
+                                                {u._id !== user.id ? (
+                                                    <button
+                                                        className="role-toggle-btn"
+                                                        title={`Click to change to ${u.role === 'admin' ? 'user' : 'admin'}`}
+                                                        style={{
+                                                            background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : undefined,
+                                                            color: u.role === 'admin' ? '#c4b5fd' : undefined,
+                                                            borderColor: u.role === 'admin' ? 'rgba(139, 92, 246, 0.3)' : undefined
+                                                        }}
+                                                        onClick={() => {
+                                                            const newRole = u.role === 'admin' ? 'user' : 'admin';
+                                                            setConfirmPopup({
+                                                                title: "Change Role",
+                                                                message: `Change ${u.name}'s role from "${u.role}" to "${newRole}"?`,
+                                                                description: newRole === 'admin'
+                                                                    ? "This user will gain full admin privileges."
+                                                                    : "This user will lose admin privileges.",
+                                                                confirmText: "Change Role",
+                                                                variant: "info",
+                                                                onConfirm: async () => {
+                                                                    try {
+                                                                        await api.put(`/users/${u._id}`, { name: u.name, role: newRole });
+                                                                        loadUsers();
+                                                                    } catch (err) {
+                                                                        setError(err?.response?.data?.message || "Role update failed");
+                                                                    }
+                                                                    setConfirmPopup(null);
+                                                                },
+                                                            });
+                                                        }}
+                                                    >
+                                                        {u.role}
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px', opacity: 0.6 }}>
+                                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                                        </svg>
+                                                    </button>
+                                                ) : (
+                                                    <span className="role-badge" style={{
+                                                        background: u.role === 'admin' ? 'rgba(139, 92, 246, 0.2)' : undefined,
+                                                        color: u.role === 'admin' ? '#c4b5fd' : undefined,
+                                                        borderColor: u.role === 'admin' ? 'rgba(139, 92, 246, 0.3)' : undefined
+                                                    }}>
+                                                        {u.role}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td>{u.createdAt ? formatDate(u.createdAt) : '-'}</td>
                                             <td style={{ textAlign: "right", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
@@ -228,15 +352,23 @@ export default function Users({ user, onLogout }) {
                                                         </button>
                                                         <button
                                                             className="btn-danger"
-                                                            onClick={async () => {
-                                                                if (!confirm(`Are you sure you want to permanently delete ${u.name}?`)) return;
-
-                                                                try {
-                                                                    await api.delete(`/users/${u._id}`);
-                                                                    loadUsers();
-                                                                } catch (err) {
-                                                                    setError(err?.response?.data?.message || "Delete failed");
-                                                                }
+                                                            onClick={() => {
+                                                                setConfirmPopup({
+                                                                    title: "Delete User",
+                                                                    message: `Are you sure you want to permanently delete ${u.name}?`,
+                                                                    description: "This action cannot be undone. All data associated with this user will be permanently removed.",
+                                                                    confirmText: "Delete",
+                                                                    variant: "danger",
+                                                                    onConfirm: async () => {
+                                                                        try {
+                                                                            await api.delete(`/users/${u._id}`);
+                                                                            loadUsers();
+                                                                        } catch (err) {
+                                                                            setError(err?.response?.data?.message || "Delete failed");
+                                                                        }
+                                                                        setConfirmPopup(null);
+                                                                    },
+                                                                });
                                                             }}
                                                         >
                                                             Remove
@@ -285,6 +417,18 @@ export default function Users({ user, onLogout }) {
                             </div>
 
                             <div className="input-group">
+                                <label className="input-label">Role</label>
+                                <select
+                                    className="form-select"
+                                    value={editRole}
+                                    onChange={(e) => setEditRole(e.target.value)}
+                                >
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+
+                            <div className="input-group">
                                 <label className="input-label">New Password (optional)</label>
                                 <input
                                     className="form-input"
@@ -314,6 +458,48 @@ export default function Users({ user, onLogout }) {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom Confirmation Popup */}
+            {confirmPopup && (
+                <div className="modal-overlay" onClick={() => setConfirmPopup(null)}>
+                    <div className="confirm-popup" onClick={(e) => e.stopPropagation()}>
+                        <div className={`confirm-icon ${confirmPopup.variant}`}>
+                            {confirmPopup.variant === 'danger' ? (
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                                </svg>
+                            ) : (
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="8.5" cy="7" r="4"></circle>
+                                    <polyline points="17 11 19 13 23 9"></polyline>
+                                </svg>
+                            )}
+                        </div>
+                        <h3 className="confirm-title">{confirmPopup.title}</h3>
+                        <p className="confirm-message">{confirmPopup.message}</p>
+                        {confirmPopup.description && (
+                            <p className="confirm-description">{confirmPopup.description}</p>
+                        )}
+                        <div className="confirm-actions">
+                            <button
+                                className="btn-secondary"
+                                onClick={() => setConfirmPopup(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className={confirmPopup.variant === 'danger' ? 'btn-confirm-danger' : 'btn-confirm-info'}
+                                onClick={confirmPopup.onConfirm}
+                            >
+                                {confirmPopup.confirmText}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
