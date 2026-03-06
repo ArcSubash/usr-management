@@ -49,4 +49,42 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
   }
 });
 
+// User: update own profile
+router.put("/profile", auth, async (req, res) => {
+  try {
+    const { name, currentPassword, password } = req.body;
+
+    // Find user by id (from auth middleware)
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update fields if provided
+    if (name) user.name = name;
+
+    // If attempting to update password, check current password first
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Current password is required to set a new password" });
+      }
+
+      const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!ok) {
+        return res.status(400).json({ message: "Invalid current password" });
+      }
+
+      user.passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    await user.save();
+
+    res.json({
+      message: "Profile updated successfully ✅",
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (err) {
+    console.log("UPDATE PROFILE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;

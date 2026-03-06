@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Login from "./Login";
 import Users from "./Users";
+import Profile from "./Profile";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -25,5 +26,9 @@ export default function App() {
 
   if (!user) return <Login onLogin={handleLogin} />;
 
-  return <Users user={user} onLogout={handleLogout} />;
+  if (user.role === "admin") {
+    return <Users user={user} onLogout={handleLogout} />;
+  } else {
+    return <Profile user={user} onLogout={handleLogout} onUpdateUser={setUser} />;
+  }
 }
