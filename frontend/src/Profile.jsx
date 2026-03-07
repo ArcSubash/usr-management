@@ -429,7 +429,7 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                     <div className="profile-details">
                                         <div className="detail-group">
                                             <span className="detail-label">Full Name</span>
-                                            {isEditingName ? (
+                                            {isEditingName && !user.deactivated ? (
                                                 <form onSubmit={handleNameUpdate} style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                                                     <input
                                                         className="form-input"
@@ -463,12 +463,14 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                             ) : (
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <span className="detail-value">{user?.name}</span>
-                                                    <button
-                                                        onClick={() => setIsEditingName(true)}
-                                                        style={{ background: 'none', border: 'none', color: '#3B82F6', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}
-                                                    >
-                                                        Edit
-                                                    </button>
+                                                    {!user.deactivated && (
+                                                        <button
+                                                            onClick={() => setIsEditingName(true)}
+                                                            style={{ background: 'none', border: 'none', color: '#3B82F6', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -495,15 +497,27 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                         <div className="detail-group">
                                             <span className="detail-label">Account Status</span>
                                             <span className="detail-value">
-                                                <span className="role-badge" style={{
-                                                    display: 'inline-block',
-                                                    marginTop: '0.2rem',
-                                                    background: 'rgba(16, 185, 129, 0.2)',
-                                                    color: '#34d399',
-                                                    borderColor: 'rgba(16, 185, 129, 0.3)'
-                                                }}>
-                                                    Active
-                                                </span>
+                                                {user?.deactivated ? (
+                                                    <span className="role-badge" style={{
+                                                        display: 'inline-block',
+                                                        marginTop: '0.2rem',
+                                                        background: 'rgba(239, 68, 68, 0.2)',
+                                                        color: '#ef4444',
+                                                        borderColor: 'rgba(239, 68, 68, 0.3)'
+                                                    }}>
+                                                        Inactive
+                                                    </span>
+                                                ) : (
+                                                    <span className="role-badge" style={{
+                                                        display: 'inline-block',
+                                                        marginTop: '0.2rem',
+                                                        background: 'rgba(16, 185, 129, 0.2)',
+                                                        color: '#34d399',
+                                                        borderColor: 'rgba(16, 185, 129, 0.3)'
+                                                    }}>
+                                                        Active
+                                                    </span>
+                                                )}
                                             </span>
                                         </div>
                                     </div>
@@ -513,6 +527,20 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                             {activeTab === 'security' && (
                                 <section className="profile-panel fade-in">
                                     <h3 className="panel-title">Change Password</h3>
+
+                                    {user?.deactivated && (
+                                        <div style={{
+                                            marginBottom: '1rem',
+                                            padding: '1rem',
+                                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                                            borderRadius: '8px',
+                                            color: '#ef4444',
+                                            fontSize: '0.9rem'
+                                        }}>
+                                            Your account has been deactivated. You cannot change your password.
+                                        </div>
+                                    )}
 
                                     {securityError && <div className="profile-error">{securityError}</div>}
                                     {securityStatus && <div className="profile-success">{securityStatus}</div>}
@@ -527,6 +555,7 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                                 value={currentPassword}
                                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                                 required
+                                                disabled={user?.deactivated}
                                             />
                                         </div>
 
@@ -539,13 +568,14 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
+                                                disabled={user?.deactivated}
                                             />
                                         </div>
 
                                         <button
                                             type="submit"
                                             className="btn-primary"
-                                            disabled={securityLoading || !currentPassword || !password}
+                                            disabled={securityLoading || !currentPassword || !password || user?.deactivated}
                                             style={{ marginTop: '1rem' }}
                                         >
                                             {securityLoading ? "Updating..." : "Update Password"}
@@ -553,9 +583,6 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                     </form>
                                 </section>
                             )}
-
-
-
                             {activeTab === 'activity' && (
                                 <section className="profile-panel fade-in">
                                     <h3 className="panel-title">Activity History</h3>
@@ -630,35 +657,38 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                         </div>
                     </div>
                 </main>
-            )}
+            )
+            }
 
             {/* Logout Confirmation Modal */}
-            {showLogoutConfirm && (
-                <div className="modal-overlay">
-                    <div className="modal-content fade-in">
-                        <div className="modal-icon warning">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                <polyline points="16 17 21 12 16 7" />
-                                <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                        </div>
-                        <h3 className="modal-title">Sign Out</h3>
-                        <p className="modal-text">Are you sure you want to log out of your account?</p>
-                        <div className="modal-actions">
-                            <button className="btn-secondary" onClick={() => setShowLogoutConfirm(false)}>
-                                Cancel
-                            </button>
-                            <button className="btn-danger" onClick={() => {
-                                setShowLogoutConfirm(false);
-                                onLogout();
-                            }}>
-                                Logout
-                            </button>
+            {
+                showLogoutConfirm && (
+                    <div className="modal-overlay">
+                        <div className="modal-content fade-in">
+                            <div className="modal-icon warning">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                    <polyline points="16 17 21 12 16 7" />
+                                    <line x1="21" y1="12" x2="9" y2="12" />
+                                </svg>
+                            </div>
+                            <h3 className="modal-title">Sign Out</h3>
+                            <p className="modal-text">Are you sure you want to log out of your account?</p>
+                            <div className="modal-actions">
+                                <button className="btn-secondary" onClick={() => setShowLogoutConfirm(false)}>
+                                    Cancel
+                                </button>
+                                <button className="btn-danger" onClick={() => {
+                                    setShowLogoutConfirm(false);
+                                    onLogout();
+                                }}>
+                                    Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

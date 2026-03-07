@@ -19,6 +19,7 @@ export default function Users({ user, onLogout }) {
     const [editName, setEditName] = useState("");
     const [editPassword, setEditPassword] = useState("");
     const [editRole, setEditRole] = useState("user");
+    const [editDeactivated, setEditDeactivated] = useState(false);
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState("");
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -134,6 +135,7 @@ export default function Users({ user, onLogout }) {
         setEditName(u.name);
         setEditPassword("");
         setEditRole(u.role);
+        setEditDeactivated(u.deactivated || false);
         setEditError("");
     };
 
@@ -142,6 +144,7 @@ export default function Users({ user, onLogout }) {
         setEditName("");
         setEditPassword("");
         setEditRole("user");
+        setEditDeactivated(false);
         setEditError("");
     };
 
@@ -151,7 +154,7 @@ export default function Users({ user, onLogout }) {
         setEditLoading(true);
 
         try {
-            const data = { name: editName, role: editRole };
+            const data = { name: editName, role: editRole, deactivated: editDeactivated };
             if (editPassword) data.password = editPassword;
 
             await api.put(`/users/${editingUser._id}`, data);
@@ -438,6 +441,19 @@ export default function Users({ user, onLogout }) {
                                     value={editPassword}
                                     onChange={(e) => setEditPassword(e.target.value)}
                                 />
+                            </div>
+
+                            <div className="input-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.8rem' }}>
+                                <input
+                                    type="checkbox"
+                                    id="deactivateUser"
+                                    checked={editDeactivated}
+                                    onChange={(e) => setEditDeactivated(e.target.checked)}
+                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                />
+                                <label htmlFor="deactivateUser" style={{ color: editDeactivated ? '#ef4444' : '#f8fafc', cursor: 'pointer', fontWeight: '500' }}>
+                                    Deactivate User Account
+                                </label>
                             </div>
 
                             <div className="modal-actions">

@@ -179,12 +179,35 @@ router.post("/login", emailValidation, handleValidationErrors, async (req, res) 
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                deactivated: user.deactivated || false,
                 createdAt: user.createdAt
             },
         });
     } catch (err) {
         console.log("AUTH ERROR:", err);
         return res.status(500).json({ message: err.message });
+    }
+});
+
+// GET CURRENT USER
+const { auth } = require("../middleware/auth");
+router.get("/me", auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        return res.json({
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                deactivated: user.deactivated || false,
+                createdAt: user.createdAt
+            }
+        });
+    } catch (err) {
+        return res.status(500).json({ message: "Server error" });
     }
 });
 

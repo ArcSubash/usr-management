@@ -93,6 +93,10 @@ router.put("/profile", auth, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    if (user.deactivated) {
+      return res.status(403).json({ message: "Your account is deactivated. You cannot modify your profile." });
+    }
+
     const oldName = user.name;
 
     // Update fields if provided
@@ -182,6 +186,31 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
     }
     if (role && ["admin", "user"].includes(role)) {
       user.role = role;
+    }
+
+    if (req.body.deactivated !== undefined) {
+      const previouslyDeactivated = user.deactivated;
+      user.deactivated = req.body.deactivated;
+
+      if (!previouslyDeactivated && user.deactivated) {
+        // Send a notification when they are deactivated
+        await Notification.create({
+          userId: user._id,
+          title: "Account Deactivated 🚫",
+          message: "Your account has been deactivated by an administrator. You can no longer modify your profile settings. Contact support for more information.",
+          type: "system",
+          icon: "🚫",
+        });
+      } else if (previouslyDeactivated && !user.deactivated) {
+        // Send a notification when they are reactivated
+        await Notification.create({
+          userId: user._id,
+          title: "Account Reactivated ✅",
+          message: "Great news! Your account has been reactivated by an administrator. You can now access all features and modify your profile again.",
+          type: "system",
+          icon: "✅",
+        });
+      }
     }
 
     await user.save();

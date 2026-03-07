@@ -10,8 +10,21 @@ export default function App() {
     // auto-login if token exists
     const saved = localStorage.getItem("user");
     const token = localStorage.getItem("token");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (saved && token) setUser(JSON.parse(saved));
+    if (saved && token) {
+      setUser(JSON.parse(saved));
+      // Fetch latest user info to sync deactivated status
+      fetch("http://localhost:5000/api/auth/me", {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setUser(data.user);
+            localStorage.setItem("user", JSON.stringify(data.user));
+          }
+        })
+        .catch(err => console.error("Failed to sync user state:", err));
+    }
   }, []);
 
   function handleLogin(u) {
