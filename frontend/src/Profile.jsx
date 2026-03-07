@@ -258,7 +258,7 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                         <div ref={notifRef} style={{ display: 'flex', position: 'relative' }}>
                             {/* Notification bell in header */}
                             <button
-                                className="notif-bell-btn"
+                                className={`notif-bell-btn ${unreadCount > 0 ? "bell-active" : "bell-idle"}`}
                                 onClick={() => setShowNotifPopup(!showNotifPopup)}
                                 id="notification-bell"
                             >
