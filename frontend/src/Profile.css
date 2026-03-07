@@ -249,6 +249,17 @@
     flex-shrink: 0;
 }
 
+.sidebar-heading {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-left: 1rem;
+    margin: 0 0 0.5rem 0;
+    user-select: none;
+}
+
 .sidebar-item {
     padding: 0.9rem 1.2rem;
     border-radius: 8px;
@@ -946,4 +957,93 @@
 .btn-danger:hover {
     background: #ef4444;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* ===================== GEAR ANIMATION & TOOLTIP ===================== */
+
+@keyframes slideBack {
+    0% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(-3px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.active-gear {
+    position: relative;
+    /* Add a subtle pulse glow when active */
+    animation: gearPulse 2s infinite ease-in-out;
+}
+
+@keyframes gearPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
+
+.active-gear svg {
+    /* Make the svg slide left to indicate going back */
+    animation: slideBack 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5));
+}
+
+/* Tooltip for the active gear letting the user know they can return to Dashboard */
+.active-gear::after {
+    content: "Return to Dashboard";
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 50%;
+    transform: translateX(50%) translateY(8px);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+    color: #cbd5e1;
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Little triangle pointing up */
+.active-gear::before {
+    content: '';
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 50%;
+    transform: translateX(50%) translateY(8px);
+    border-width: 0 6px 7px 6px;
+    border-style: solid;
+    border-color: transparent transparent rgba(255, 255, 255, 0.1) transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+}
+
+/* Show tooltip on hover */
+.active-gear:hover::after,
+.active-gear:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(50%) translateY(0);
 }
