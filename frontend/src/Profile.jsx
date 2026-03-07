@@ -298,7 +298,7 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     return (
         <div className="profile-container">
             <header className="profile-header">
-                <h2 className="profile-title">✨ Tamizhan Intern</h2>
+                <h2 className="profile-title">✨ தamizhan Intern</h2>
 
                 <div className="user-info" style={{ position: "relative" }}>
                     <span className="user-greeting">
@@ -431,12 +431,33 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
 
             {view === 'dashboard' ? (
                 <main className="profile-content fade-in" style={{ display: 'block', maxWidth: '800px', margin: '2rem auto' }}>
-                    <section className="profile-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-                        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>👋</div>
+                    <section className="profile-panel" style={{ textAlign: 'center', padding: '4rem 2rem', marginBottom: '2rem' }}>
+                        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
                         <h2 style={{ margin: '0 0 1rem 0', color: '#f8fafc', fontSize: '2rem' }}>Welcome Back, {user?.name}!</h2>
                         <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.6' }}>
                             This is your primary dashboard. You can access your User Settings, view notifications, and manage your account by clicking the <b>Gear Icon</b> in the top right.
                         </p>
+                    </section>
+
+                    <section className="profile-panel" style={{ textAlign: 'left', padding: '3rem 2rem' }}>
+                        <h3 style={{ margin: '0 0 1.5rem 0', color: '#f8fafc', fontSize: '1.8rem', textAlign: 'center', fontWeight: '600' }}>
+                            About Tamizhan Skills
+                        </h3>
+                        <h3 style={{ margin: '0 0 1.5rem 0', color: '#f8fafc', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                            <span style={{ fontSize: '1.8rem' }}>🎓</span>
+                            Tamizhan Skills – RISE Program
+                        </h3>
+                        <div style={{ position: 'relative', zIndex: 1 }}>
+                            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1rem' }}>
+                                <strong style={{ color: '#e2e8f0' }}>Tamizhan Skills</strong> is a Tamil Nadu-based ed-tech initiative that provides affordable skill training, internships, and career guidance for students.
+                            </p>
+                            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1rem' }}>
+                                The <strong style={{ color: '#e2e8f0' }}>RISE (Real-time Internship & Skill Enhancement)</strong> program is a free virtual internship designed to help students gain hands-on experience through real projects, mentorship, and industry-relevant skills.
+                            </p>
+                            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.7', margin: 0 }}>
+                                It aims to bridge the gap between academic learning and practical industry exposure, helping students build portfolios and improve employability.
+                            </p>
+                        </div>
                     </section>
                 </main>
             ) : (
