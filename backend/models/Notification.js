@@ -16,7 +16,7 @@ const notificationSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Auto-expire notifications after 30 days
-notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+// Auto-expire notifications after 5 minutes
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 5 * 60 });
 
 module.exports = mongoose.model("Notification", notificationSchema);

@@ -28,6 +28,15 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     const [view, setView] = useState("dashboard");
     const notifRef = useRef(null);
 
+    // Help state
+    const [showHelpModal, setShowHelpModal] = useState(false);
+    const [helpMessage, setHelpMessage] = useState("");
+    const [helpStatus, setHelpStatus] = useState("");
+    const [helpError, setHelpError] = useState("");
+    const [helpLoading, setHelpLoading] = useState(false);
+    const [myTickets, setMyTickets] = useState([]);
+    const [ticketsLoading, setTicketsLoading] = useState(false);
+
     // Close popup on click outside
     useEffect(() => {
         function handleClickOutside(event) {
@@ -127,6 +136,49 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
             setUnreadCount(0);
         } catch (err) {
             console.error("Failed to clear notifications", err);
+        }
+    }
+
+    // Fetch user's support tickets
+    const fetchMyTickets = useCallback(async (showSpinner = true) => {
+        if (showSpinner) setTicketsLoading(true);
+        try {
+            const res = await api.get("/support/my-tickets");
+            setMyTickets(res.data);
+        } catch (err) {
+            console.error("Failed to fetch tickets", err);
+        } finally {
+            if (showSpinner) setTicketsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (showHelpModal) {
+            fetchMyTickets(true);
+            const interval = setInterval(() => fetchMyTickets(false), 3000);
+            return () => clearInterval(interval);
+        }
+    }, [showHelpModal, fetchMyTickets]);
+
+    // Submit Help Message
+    async function submitHelpMessage(e) {
+        e.preventDefault();
+        setHelpError("");
+        setHelpStatus("");
+        setHelpLoading(true);
+
+        try {
+            await api.post("/support", { message: helpMessage });
+            setHelpStatus("Your message has been sent successfully!");
+            setHelpMessage("");
+            fetchMyTickets(false); // Refresh tickets quickly after sending
+            setTimeout(() => {
+                setHelpStatus("");
+            }, 3000);
+        } catch (err) {
+            setHelpError(err?.response?.data?.message || "Failed to send message");
+        } finally {
+            setHelpLoading(false);
         }
     }
 
@@ -684,6 +736,120 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                 }}>
                                     Logout
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Floating Need Help Button */}
+            <button
+                className="floating-help-btn fade-in"
+                onClick={() => setShowHelpModal(true)}
+                title="Need Help?"
+            >
+                <span className="help-icon">💡</span>
+                <span className="help-text">Need Help?</span>
+            </button>
+
+            {/* Need Help Modal */}
+            {
+                showHelpModal && (
+                    <div className="modal-overlay" style={{ padding: '1rem' }}>
+                        <div className="modal-content fade-in" style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', alignItems: 'stretch', textAlign: 'left', padding: '1.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '1rem' }}>
+                                <h3 className="modal-title" style={{ margin: 0 }}>Contact Support</h3>
+                                <button className="btn-icon" onClick={() => setShowHelpModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', right: 0 }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            </div>
+
+                            <p className="modal-text" style={{ marginBottom: "1.5rem", textAlign: "left" }}>
+                                Describe your issue or query. Our team will get back to you via your registered email ({email}).
+                            </p>
+
+                            {helpError && <div className="profile-error" style={{ width: '100%' }}>{helpError}</div>}
+                            {helpStatus && <div className="profile-success" style={{ width: '100%' }}>{helpStatus}</div>}
+
+                            <form onSubmit={submitHelpMessage} style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+                                <textarea
+                                    className="form-input"
+                                    placeholder="Type your message here to create a new query..."
+                                    value={helpMessage}
+                                    onChange={(e) => setHelpMessage(e.target.value)}
+                                    rows="4"
+                                    required
+                                    style={{ resize: "vertical", minHeight: "100px", marginBottom: "1rem", width: "100%", boxSizing: "border-box" }}
+                                ></textarea>
+                                <div className="modal-actions" style={{ marginTop: 0, width: "100%", justifyContent: "flex-end" }}>
+                                    <button
+                                        type="button"
+                                        className="btn-secondary"
+                                        onClick={() => {
+                                            setShowHelpModal(false);
+                                            setHelpMessage("");
+                                            setHelpError("");
+                                            setHelpStatus("");
+                                        }}
+                                        disabled={helpLoading}
+                                    >
+                                        Close
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn-primary"
+                                        disabled={helpLoading || !helpMessage.trim()}
+                                    >
+                                        {helpLoading ? "Sending..." : "Submit Query"}
+                                    </button>
+                                </div>
+                            </form>
+
+                            {/* Ticket History */}
+                            <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.5rem' }}>
+                                <h4 style={{ margin: '0 0 1rem 0', color: '#f8fafc', fontSize: '1.1rem' }}>Your Past Queries</h4>
+
+                                {ticketsLoading ? (
+                                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Loading queries...</div>
+                                ) : myTickets.length === 0 ? (
+                                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#64748b', fontSize: '0.9rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                                        You haven't submitted any queries yet.
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                        {myTickets.map(ticket => (
+                                            <div key={ticket._id} style={{
+                                                padding: '1rem',
+                                                background: 'rgba(255,255,255,0.03)',
+                                                border: `1px solid ${ticket.status === 'open' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`,
+                                                borderRadius: '8px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.5rem'
+                                            }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                                        {new Date(ticket.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    </span>
+                                                    <span style={{
+                                                        padding: '3px 8px',
+                                                        borderRadius: '4px',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: 600,
+                                                        background: ticket.status === 'open' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                                                        color: ticket.status === 'open' ? '#ef4444' : '#22c55e',
+                                                        textTransform: 'uppercase'
+                                                    }}>
+                                                        {ticket.status}
+                                                    </span>
+                                                </div>
+                                                <p style={{ margin: 0, fontSize: '0.9rem', color: '#e2e8f0', lineHeight: 1.5 }}>
+                                                    {ticket.message}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

@@ -36,6 +36,11 @@ export default function Users({ user, onLogout }) {
     const notifRef = useRef(null);
     const [bellRinging, setBellRinging] = useState(false);
 
+    // Support Mails state
+    const [showMailsModal, setShowMailsModal] = useState(false);
+    const [mails, setMails] = useState([]);
+    const [mailsLoading, setMailsLoading] = useState(false);
+
     function addNotification(message, type = "info") {
         const notif = {
             id: Date.now(),
@@ -72,12 +77,45 @@ export default function Users({ user, onLogout }) {
         }
     }
 
-    // Auto-refresh every 15 seconds for real-time count
+    // Auto-refresh every 3 seconds for real-time count
     useEffect(() => {
-        loadUsers();
-        const interval = setInterval(loadUsers, 15000);
+        function fetchAllData() {
+            loadUsers();
+            fetchMails(false); // fetch without showing loading spinner
+        }
+        fetchAllData();
+        const interval = setInterval(fetchAllData, 3000);
         return () => clearInterval(interval);
     }, []);
+
+    async function fetchMails(showSpinner = true) {
+        if (showSpinner) setMailsLoading(true);
+        try {
+            const res = await api.get("/support");
+            setMails(res.data);
+        } catch (err) {
+            console.error("Failed to fetch mails:", err);
+        } finally {
+            if (showSpinner) setMailsLoading(false);
+        }
+    }
+
+    async function resolveMail(id) {
+        try {
+            await api.put(`/support/${id}/resolve`);
+            fetchMails(); // Refresh list
+        } catch (err) {
+            console.error("Failed to resolve mail:", err);
+        }
+    }
+
+    useEffect(() => {
+        if (showMailsModal && mails.length === 0) {
+            fetchMails(true);
+        }
+    }, [showMailsModal]);
+
+    const openMailsCount = mails.filter(m => m.status === 'open').length;
 
     async function handleRefresh() {
         setIsRefreshing(true);
@@ -275,6 +313,31 @@ export default function Users({ user, onLogout }) {
                     <span className="user-greeting">
                         Hello, <b>{user?.name}</b> <span className="role-badge">{user?.role}</span>
                     </span>
+
+                    <button
+                        className="btn-notif"
+                        onClick={() => setShowMailsModal(true)}
+                        title="User Support Mails"
+                        style={{ marginRight: '8px', background: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", border: "1px solid rgba(59, 130, 246, 0.2)", width: 'auto', padding: '0 12px', gap: '6px' }}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block", flexShrink: 0 }}>
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        Mails
+                        {openMailsCount > 0 && (
+                            <span style={{
+                                background: "#ef4444",
+                                color: "white",
+                                fontSize: "0.75rem",
+                                fontWeight: "bold",
+                                padding: "2px 6px",
+                                borderRadius: "99px",
+                            }}>
+                                {openMailsCount}
+                            </span>
+                        )}
+                    </button>
 
                     {/* Notification Bell */}
                     <div ref={notifRef} style={{ position: "relative", display: "inline-flex" }}>
@@ -770,6 +833,93 @@ export default function Users({ user, onLogout }) {
                                 }}
                             >
                                 Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Support Mails Modal */}
+            {showMailsModal && (
+                <div className="modal-overlay" style={{ padding: '1rem' }}>
+                    <div className="modal-content fade-in" style={{ maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto', alignItems: 'stretch', textAlign: 'left', padding: '1.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', width: '100%' }}>
+                            <h3 className="modal-title" style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                Support Mails from Users
+                            </h3>
+                            <button className="btn-icon" onClick={() => setShowMailsModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+
+                        {mailsLoading ? (
+                            <div className="notif-loading" style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: '#94a3b8' }}>
+                                <div className="loading-spinner" />
+                                <span>Loading messages...</span>
+                            </div>
+                        ) : mails.length === 0 ? (
+                            <div className="notif-empty" style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: '#475569' }}>
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                <span style={{ fontSize: '1.1rem' }}>No support messages yet</span>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '60vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                                {mails.map((mail) => (
+                                    <div key={mail._id} style={{
+                                        background: 'rgba(255, 255, 255, 0.03)',
+                                        border: `1px solid ${mail.status === 'open' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`,
+                                        borderRadius: '12px',
+                                        padding: '1.5rem',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '1rem',
+                                        position: 'relative'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc' }}>{mail.user?.name || 'Unknown User'}</span>
+                                                <span style={{ fontSize: '0.9rem', color: '#94a3b8' }}>{mail.email}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                                    {new Date(mail.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                <span style={{
+                                                    padding: '4px 10px',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 600,
+                                                    background: mail.status === 'open' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                                                    color: mail.status === 'open' ? '#ef4444' : '#22c55e',
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    {mail.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: 'rgba(0, 0, 0, 0.2)', padding: '1rem', borderRadius: '8px', color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                                            {mail.message}
+                                        </div>
+                                        {mail.status === 'open' && (
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                                                <button
+                                                    className="btn-primary"
+                                                    onClick={() => resolveMail(mail._id)}
+                                                    style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                >
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    Mark as Resolved
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <div className="modal-actions" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', justifyContent: 'flex-end', display: 'flex', width: '100%' }}>
+                            <button className="btn-secondary" onClick={() => setShowMailsModal(false)} style={{ width: 'auto', padding: '0.6rem 2rem' }}>
+                                Close
                             </button>
                         </div>
                     </div>

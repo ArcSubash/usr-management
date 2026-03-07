@@ -9,6 +9,7 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const notificationRoutes = require("./routes/notifications");
 const activityRoutes = require("./routes/activities");
+const supportRoutes = require("./routes/support");
 
 
 const app = express();
@@ -21,6 +22,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/activities", activityRoutes);
+app.use("/api/support", supportRoutes);
 
 mongoose
     .connect(process.env.MONGO_URI)
