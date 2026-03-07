@@ -95,6 +95,17 @@ Admin can:
 -   Edit user's details
 -   Deactivate a user, and more
 
+Users can:
+
+-   View their profile
+-   Change their password
+-   View their activities
+-   View their notifications
+-   Create a support ticket
+-   View their support tickets
+-   View their support ticket status
+
+
 ## Security
 
 -   Passwords are hashed using bcrypt
