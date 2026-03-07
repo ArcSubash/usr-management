@@ -10,6 +10,16 @@ dashboard.
 ------------------------------------------------------------------------
 # FIRSTLY MODIFY THE `.env.example` file's content with your mongodb connection string and other details and rename it to `.env`
 ------------------------------------------------------------------------
+# Mongo DB Setup
+
+1. Create a MongoDB Atlas account and create a new cluster.
+2. Get the connection string from the cluster. **Don't use the SRV connection string**.
+3. Then go to **Network Access -> IP Access List**.
+4. Add your IP address to the IP Access List, or better add 0.0.0.0/0 to allow all IP addresses.
+5. Replace the connection string in the `.env` file.
+
+------------------------------------------------------------------------
+
 # Application Deployment Workflow
 
 1. Clone the repository from GitHub.
@@ -69,6 +79,7 @@ The backend interacts with MongoDB using **Mongoose ODM**.
 5. The backend middleware verifies the token before granting access to protected routes.
 
 ------------------------------------------------------------------------
+
 
 # Features
 
