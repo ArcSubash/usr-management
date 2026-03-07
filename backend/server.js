@@ -36,3 +36,11 @@ mongoose
         );
     })
     .catch((err) => console.log("DB error:", err));
+
+import path from "path";
+
+app.use(express.static(path.join(process.cwd(), "frontend/dist")));
+
+app.get("*", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "frontend/dist/index.html"));
+});
