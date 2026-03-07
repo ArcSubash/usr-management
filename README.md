@@ -175,6 +175,8 @@ Create `.env` file:
     JWT_SECRET=your_secret_key
     ADMIN_EMAIL=admin@test.com
     ADMIN_PASSWORD=admin123
+    SMTP_USER=your_gmail_address@gmail.com
+    SMTP_PASS=your_gmail_16_digit_app_password(with no space)
 
 Start backend server:
 

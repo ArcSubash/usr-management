@@ -31,7 +31,7 @@ async function sendEmail(to, otp) {
         }
 
         const mailOptions = {
-            from: `"Admin Settings" <${process.env.SMTP_USER}>`,
+            from: `"User Management" <${process.env.SMTP_USER}>`,
             to,
             subject: "Your Account Verification OTP",
             html: `<div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">

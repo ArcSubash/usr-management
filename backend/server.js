@@ -7,6 +7,8 @@ const seedAdmin = require("./seedAdmin");
 
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
+const notificationRoutes = require("./routes/notifications");
+const activityRoutes = require("./routes/activities");
 
 
 const app = express();
@@ -17,6 +19,8 @@ app.get("/", (req, res) => res.send("API running ✅"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/activities", activityRoutes);
 
 mongoose
     .connect(process.env.MONGO_URI)

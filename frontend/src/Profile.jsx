@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "./api";
 import "./Profile.css";
 
 export default function Profile({ user, onLogout, onUpdateUser }) {
     const [name, setName] = useState(user.name || "");
-    const email = user.email || ""; // Email is no longer a state variable
+    const email = user.email || "";
     const [currentPassword, setCurrentPassword] = useState("");
     const [password, setPassword] = useState("");
 
     const [isEditingName, setIsEditingName] = useState(false);
-    const [activeTab, setActiveTab] = useState("account"); // 'account' or 'security'
+    const [activeTab, setActiveTab] = useState("account");
 
     const [status, setStatus] = useState("");
     const [error, setError] = useState("");
@@ -18,6 +18,116 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     const [securityError, setSecurityError] = useState("");
     const [securityStatus, setSecurityStatus] = useState("");
     const [securityLoading, setSecurityLoading] = useState(false);
+
+    // Notifications state
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notifLoading, setNotifLoading] = useState(false);
+    const [showNotifPopup, setShowNotifPopup] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const notifRef = useRef(null);
+
+    // Close popup on click outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (notifRef.current && !notifRef.current.contains(event.target)) {
+                setShowNotifPopup(false);
+            }
+        }
+        if (showNotifPopup) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showNotifPopup]);
+
+    // Activity state
+    const [activities, setActivities] = useState([]);
+    const [activityLoading, setActivityLoading] = useState(false);
+    const [activityPagination, setActivityPagination] = useState({ page: 1, totalPages: 1 });
+
+    // Fetch notifications
+    const fetchNotifications = useCallback(async () => {
+        setNotifLoading(true);
+        try {
+            const res = await api.get("/notifications");
+            setNotifications(res.data.notifications);
+            setUnreadCount(res.data.unreadCount);
+        } catch (err) {
+            console.error("Failed to fetch notifications", err);
+        } finally {
+            setNotifLoading(false);
+        }
+    }, []);
+
+    // Fetch activities
+    const fetchActivities = useCallback(async (page = 1) => {
+        setActivityLoading(true);
+        try {
+            const res = await api.get(`/activities?page=${page}&limit=15`);
+            setActivities(res.data.activities);
+            setActivityPagination(res.data.pagination);
+        } catch (err) {
+            console.error("Failed to fetch activities", err);
+        } finally {
+            setActivityLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchNotifications();
+        fetchActivities();
+    }, [fetchNotifications, fetchActivities]);
+
+    // Mark a notification as read
+    async function markAsRead(id) {
+        try {
+            await api.put(`/notifications/${id}/read`);
+            setNotifications(prev =>
+                prev.map(n => n._id === id ? { ...n, read: true } : n)
+            );
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch (err) {
+            console.error("Failed to mark as read", err);
+        }
+    }
+
+    // Mark all as read
+    async function markAllAsRead() {
+        try {
+            await api.put("/notifications/read-all");
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            setUnreadCount(0);
+        } catch (err) {
+            console.error("Failed to mark all as read", err);
+        }
+    }
+
+    // Delete a notification
+    async function deleteNotification(id) {
+        try {
+            await api.delete(`/notifications/${id}`);
+            const deleted = notifications.find(n => n._id === id);
+            setNotifications(prev => prev.filter(n => n._id !== id));
+            if (deleted && !deleted.read) {
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
+        } catch (err) {
+            console.error("Failed to delete notification", err);
+        }
+    }
+
+    // Clear all notifications
+    async function clearAllNotifications() {
+        try {
+            await api.delete("/notifications");
+            setNotifications([]);
+            setUnreadCount(0);
+        } catch (err) {
+            console.error("Failed to clear notifications", err);
+        }
+    }
 
     async function handleNameUpdate(e) {
         e.preventDefault();
@@ -30,14 +140,14 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
             const res = await api.put("/users/profile", data);
             setStatus(res.data.message);
 
-            // update user in localStorage and parent state
             const updatedUser = res.data.user;
             localStorage.setItem("user", JSON.stringify(updatedUser));
             if (onUpdateUser) onUpdateUser(updatedUser);
             setIsEditingName(false);
 
-            // clear success message after 3 seconds
             setTimeout(() => setStatus(""), 3000);
+            fetchNotifications();
+            fetchActivities();
         } catch (err) {
             setError(err?.response?.data?.message || "Failed to update profile");
         } finally {
@@ -59,7 +169,7 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
 
         try {
             const data = {
-                name: user.name, // Name must still be sent
+                name: user.name,
                 currentPassword,
                 password
             };
@@ -67,11 +177,12 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
             await api.put("/users/profile", data);
             setSecurityStatus("Password changed successfully!");
 
-            // clear password fields on success
             setCurrentPassword("");
             setPassword("");
 
             setTimeout(() => setSecurityStatus(""), 3000);
+            fetchNotifications();
+            fetchActivities();
         } catch (err) {
             setSecurityError(err?.response?.data?.message || "Failed to change password");
         } finally {
@@ -79,10 +190,8 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
         }
     }
 
-    // Format role output nicely
     const displayRole = user.role?.charAt(0).toUpperCase() + user.role?.slice(1);
 
-    // Format account creation date
     const formatJoinDate = (dateString) => {
         if (!dateString) return "Not Available";
         try {
@@ -93,16 +202,153 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
         }
     };
 
+    const formatTimeAgo = (dateString) => {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSecs < 60) return "Just now";
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
+    const getActivityIcon = (action) => {
+        switch (action) {
+            case "login": return "🔑";
+            case "profile_update": return "✏️";
+            case "password_change": return "🔒";
+            case "name_change": return "✏️";
+            case "account_created": return "🎉";
+            case "logout": return "🚪";
+            default: return "📋";
+        }
+    };
+
+    const getActivityColor = (action) => {
+        switch (action) {
+            case "login": return "#3b82f6";
+            case "profile_update": return "#8b5cf6";
+            case "password_change": return "#f59e0b";
+            case "name_change": return "#8b5cf6";
+            case "account_created": return "#10b981";
+            case "logout": return "#ef4444";
+            default: return "#64748b";
+        }
+    };
+
     return (
         <div className="profile-container">
             <header className="profile-header">
                 <h2 className="profile-title">👤 User Settings</h2>
 
-                <div className="user-info">
+                <div className="user-info" style={{ position: "relative" }}>
                     <span className="user-greeting">
                         Hello, <b>{user?.name}</b> <span className="role-badge">{user?.role}</span>
                     </span>
-                    <button onClick={onLogout} className="btn-logout">
+
+                    {/* Notification Container */}
+                    <div ref={notifRef} style={{ display: 'flex' }}>
+                        {/* Notification bell in header */}
+                        <button
+                            className="notif-bell-btn"
+                            onClick={() => setShowNotifPopup(!showNotifPopup)}
+                            id="notification-bell"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                            {unreadCount > 0 && (
+                                <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                            )}
+                        </button>
+
+                        {/* Notification Popup overlay */}
+                        {showNotifPopup && (
+                            <div className="notif-popup fade-in">
+                                <div className="notif-header">
+                                    <h3 className="notif-popup-title">Notification Center</h3>
+                                    <div className="notif-actions">
+                                        {unreadCount > 0 && (
+                                            <button className="notif-action-btn" onClick={markAllAsRead}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                                Mark all read
+                                            </button>
+                                        )}
+                                        {notifications.length > 0 && (
+                                            <button className="notif-action-btn danger" onClick={clearAllNotifications}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <polyline points="3 6 5 6 21 6" />
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                </svg>
+                                                Clear all
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="notif-popup-content">
+                                    {notifLoading ? (
+                                        <div className="notif-loading">
+                                            <div className="loading-spinner" />
+                                            <span>Loading notifications...</span>
+                                        </div>
+                                    ) : notifications.length === 0 ? (
+                                        <div className="notif-empty">
+                                            <div className="notif-empty-icon">🔔</div>
+                                            <h4>All caught up!</h4>
+                                            <p>No notifications at the moment.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="notif-list">
+                                            {notifications.map((notif) => (
+                                                <div
+                                                    key={notif._id}
+                                                    className={`notif-item ${!notif.read ? 'unread' : ''}`}
+                                                    onClick={() => !notif.read && markAsRead(notif._id)}
+                                                >
+                                                    <div className="notif-icon-wrapper">
+                                                        <span className="notif-icon">{notif.icon || '🔔'}</span>
+                                                    </div>
+                                                    <div className="notif-content">
+                                                        <div className="notif-title-row">
+                                                            <span className="notif-title">{notif.title}</span>
+                                                            {!notif.read && <span className="notif-dot" />}
+                                                        </div>
+                                                        <p className="notif-message">{notif.message}</p>
+                                                        <span className="notif-time">{formatTimeAgo(notif.createdAt)}</span>
+                                                    </div>
+                                                    <button
+                                                        className="notif-delete-btn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deleteNotification(notif._id);
+                                                        }}
+                                                        title="Delete notification"
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <button onClick={() => setShowLogoutConfirm(true)} className="btn-logout">
                         Logout
                     </button>
                 </div>
@@ -116,13 +362,23 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                             className={`sidebar-item ${activeTab === 'account' ? 'active' : ''}`}
                             onClick={() => setActiveTab('account')}
                         >
+                            <span className="sidebar-icon">👤</span>
                             My Account
                         </button>
                         <button
                             className={`sidebar-item ${activeTab === 'security' ? 'active' : ''}`}
                             onClick={() => setActiveTab('security')}
                         >
+                            <span className="sidebar-icon">🔐</span>
                             Password & Security
+                        </button>
+
+                        <button
+                            className={`sidebar-item ${activeTab === 'activity' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('activity')}
+                        >
+                            <span className="sidebar-icon">📋</span>
+                            Activity History
                         </button>
                     </nav>
 
@@ -262,9 +518,111 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                 </form>
                             </section>
                         )}
+
+
+
+                        {activeTab === 'activity' && (
+                            <section className="profile-panel fade-in">
+                                <h3 className="panel-title">Activity History</h3>
+
+                                {activityLoading ? (
+                                    <div className="notif-loading">
+                                        <div className="loading-spinner" />
+                                        <span>Loading activity...</span>
+                                    </div>
+                                ) : activities.length === 0 ? (
+                                    <div className="notif-empty">
+                                        <div className="notif-empty-icon">📋</div>
+                                        <h4>No activity yet</h4>
+                                        <p>Your activity history will appear here.</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="activity-timeline">
+                                            {activities.map((activity, index) => (
+                                                <div key={activity._id} className="activity-item">
+                                                    <div className="activity-line-wrapper">
+                                                        <div
+                                                            className="activity-dot"
+                                                            style={{ backgroundColor: getActivityColor(activity.action) }}
+                                                        />
+                                                        {index < activities.length - 1 && (
+                                                            <div className="activity-line" />
+                                                        )}
+                                                    </div>
+                                                    <div className="activity-content">
+                                                        <div className="activity-header">
+                                                            <span className="activity-icon">{getActivityIcon(activity.action)}</span>
+                                                            <span className="activity-action">{activity.description}</span>
+                                                        </div>
+                                                        <span className="activity-time">{formatTimeAgo(activity.createdAt)}</span>
+                                                        {activity.ipAddress && (
+                                                            <span className="activity-meta">
+                                                                IP: {activity.ipAddress}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Pagination */}
+                                        {activityPagination.totalPages > 1 && (
+                                            <div className="activity-pagination">
+                                                <button
+                                                    className="pagination-btn"
+                                                    disabled={activityPagination.page <= 1}
+                                                    onClick={() => fetchActivities(activityPagination.page - 1)}
+                                                >
+                                                    ← Previous
+                                                </button>
+                                                <span className="pagination-info">
+                                                    Page {activityPagination.page} of {activityPagination.totalPages}
+                                                </span>
+                                                <button
+                                                    className="pagination-btn"
+                                                    disabled={activityPagination.page >= activityPagination.totalPages}
+                                                    onClick={() => fetchActivities(activityPagination.page + 1)}
+                                                >
+                                                    Next →
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </section>
+                        )}
                     </div>
                 </div>
             </main>
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutConfirm && (
+                <div className="modal-overlay">
+                    <div className="modal-content fade-in">
+                        <div className="modal-icon warning">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                        </div>
+                        <h3 className="modal-title">Sign Out</h3>
+                        <p className="modal-text">Are you sure you want to log out of your account?</p>
+                        <div className="modal-actions">
+                            <button className="btn-secondary" onClick={() => setShowLogoutConfirm(false)}>
+                                Cancel
+                            </button>
+                            <button className="btn-danger" onClick={() => {
+                                setShowLogoutConfirm(false);
+                                onLogout();
+                            }}>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

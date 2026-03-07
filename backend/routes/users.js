@@ -1,6 +1,8 @@
 const express = require("express");
 const User = require("../models/User");
 const { auth, adminOnly } = require("../middleware/auth");
+const Notification = require("../models/Notification");
+const Activity = require("../models/Activity");
 
 const router = express.Router();
 
@@ -91,6 +93,8 @@ router.put("/profile", auth, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    const oldName = user.name;
+
     // Update fields if provided
     if (name) user.name = name;
 
@@ -109,6 +113,39 @@ router.put("/profile", auth, async (req, res) => {
     }
 
     await user.save();
+
+    // Track what was updated
+    if (name && name !== oldName) {
+      await Notification.create({
+        userId: req.user.id,
+        type: "profile_update",
+        title: "Profile Updated",
+        message: "Your display name was updated successfully.",
+        icon: "✏️",
+      });
+      await Activity.create({
+        userId: req.user.id,
+        action: "name_change",
+        description: `Display name updated to "${name}"`,
+        ipAddress: req.ip,
+      });
+    }
+
+    if (password) {
+      await Notification.create({
+        userId: req.user.id,
+        type: "password_change",
+        title: "Password Changed 🔒",
+        message: "Your password was changed successfully. If this wasn't you, contact support immediately.",
+        icon: "🔒",
+      });
+      await Activity.create({
+        userId: req.user.id,
+        action: "password_change",
+        description: "Password was changed",
+        ipAddress: req.ip,
+      });
+    }
 
     res.json({
       message: "Profile updated successfully ✅",

@@ -4,3 +4,4 @@ node_modules
 out.txt
 diff.txt
 gs.txt
+lint_out.txt

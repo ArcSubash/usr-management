@@ -5,6 +5,8 @@ const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const OTP = require("../models/OTP");
 const sendEmail = require("../utils/sendEmail");
+const Notification = require("../models/Notification");
+const Activity = require("../models/Activity");
 
 const router = express.Router();
 
@@ -112,6 +114,23 @@ router.post("/register", emailValidation, handleValidationErrors, async (req, re
         // Clean up OTP record post-success
         await OTP.findByIdAndDelete(otpRecord._id);
 
+        // Create welcome notification
+        await Notification.create({
+            userId: user._id,
+            type: "welcome",
+            title: "Welcome to the platform! 🎉",
+            message: `Hi ${user.name}, your account has been created successfully. Explore your settings and personalize your profile.`,
+            icon: "🎉",
+        });
+
+        // Log activity
+        await Activity.create({
+            userId: user._id,
+            action: "account_created",
+            description: "Account was created via registration",
+            ipAddress: req.ip,
+        });
+
         return res.json({ message: "User created ✅", userId: user._id });
     } catch (err) {
         console.log("AUTH ERROR:", err);
@@ -135,6 +154,23 @@ router.post("/login", emailValidation, handleValidationErrors, async (req, res) 
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );
+
+        // Create login notification
+        await Notification.create({
+            userId: user._id,
+            type: "login",
+            title: "New Login Detected",
+            message: `You logged in on ${new Date().toLocaleString()}`,
+            icon: "🔐",
+        });
+
+        // Log activity
+        await Activity.create({
+            userId: user._id,
+            action: "login",
+            description: "Logged in successfully",
+            ipAddress: req.ip,
+        });
 
         return res.json({
             token,
