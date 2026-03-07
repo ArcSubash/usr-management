@@ -22,6 +22,10 @@ export default function App() {
       if (!res.ok) return;
       const data = await res.json();
       if (data.user) {
+        // Save fresh token if role changed on the server
+        if (data.newToken) {
+          localStorage.setItem("token", data.newToken);
+        }
         setUser(prev => {
           const changed = JSON.stringify(prev) !== JSON.stringify(data.user);
           if (changed) {
@@ -31,6 +35,14 @@ export default function App() {
                 showToast("🚫 Your account has been deactivated by an administrator.", "deactivated");
               } else {
                 showToast("✅ Your account has been reactivated! You can now use all features.", "reactivated");
+              }
+            }
+            // Detect role change
+            if (prev && prev.role !== data.user.role) {
+              if (data.user.role === "admin") {
+                showToast("🛡️ Your account has been promoted to Admin. Redirecting to admin dashboard...", "reactivated");
+              } else {
+                showToast("👤 Your admin privileges have been removed.", "deactivated");
               }
             }
             localStorage.setItem("user", JSON.stringify(data.user));

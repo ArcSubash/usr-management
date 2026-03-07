@@ -196,6 +196,16 @@ router.get("/me", auth, async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: "User not found" });
 
+        // If the role in the DB changed since the token was issued, mint a fresh token
+        let newToken = null;
+        if (req.user.role !== user.role) {
+            newToken = jwt.sign(
+                { id: user._id, role: user.role },
+                process.env.JWT_SECRET,
+                { expiresIn: "7d" }
+            );
+        }
+
         return res.json({
             user: {
                 id: user._id,
@@ -204,7 +214,8 @@ router.get("/me", auth, async (req, res) => {
                 role: user.role,
                 deactivated: user.deactivated || false,
                 createdAt: user.createdAt
-            }
+            },
+            ...(newToken && { newToken })
         });
     } catch (err) {
         return res.status(500).json({ message: "Server error" });

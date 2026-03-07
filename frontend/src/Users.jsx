@@ -72,6 +72,13 @@ export default function Users({ user, onLogout }) {
         }
     }
 
+    // Auto-refresh every 15 seconds for real-time count
+    useEffect(() => {
+        loadUsers();
+        const interval = setInterval(loadUsers, 15000);
+        return () => clearInterval(interval);
+    }, []);
+
     async function handleRefresh() {
         setIsRefreshing(true);
         await loadUsers();
@@ -435,7 +442,36 @@ export default function Users({ user, onLogout }) {
 
                 <section className="panel" style={{ overflow: "hidden" }}>
                     <div className="panel-title">
-                        <span>Managed Users ({users.length})</span>
+                        <span style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                            Managed Users
+                            <span style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                background: "rgba(59,130,246,0.15)",
+                                color: "#60a5fa",
+                                border: "1px solid rgba(59,130,246,0.25)",
+                                borderRadius: "9999px",
+                                fontSize: "0.78rem",
+                                fontWeight: 700,
+                                minWidth: "28px",
+                                height: "22px",
+                                padding: "0 7px",
+                                transition: "all 0.4s cubic-bezier(0.34,1.56,0.64,1)",
+                                transform: "scale(1)",
+                                animation: "countPop 0.4s cubic-bezier(0.34,1.56,0.64,1)",
+                            }} key={users.length}>{users.length}</span>
+                            <span title="Live — auto-refreshes every 15s" style={{
+                                display: "inline-block",
+                                width: "7px",
+                                height: "7px",
+                                borderRadius: "50%",
+                                background: "#22c55e",
+                                boxShadow: "0 0 0 0 rgba(34,197,94,0.4)",
+                                animation: "livePulse 2s ease-in-out infinite",
+                                flexShrink: 0,
+                            }} />
+                        </span>
                         <button onClick={handleRefresh} className="btn-icon">
                             <svg
                                 className={isRefreshing ? "spin-animation" : ""}
