@@ -25,6 +25,7 @@ export default function Users({ user, onLogout }) {
 
     // Confirmation popup state
     const [confirmPopup, setConfirmPopup] = useState(null);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     async function loadUsers() {
         setError("");
@@ -188,7 +189,7 @@ export default function Users({ user, onLogout }) {
                     <span className="user-greeting">
                         Hello, <b>{user?.name}</b> <span className="role-badge">{user?.role}</span>
                     </span>
-                    <button onClick={onLogout} className="btn-logout">
+                    <button onClick={() => setShowLogoutConfirm(true)} className="btn-logout">
                         Logout
                     </button>
                 </div>
@@ -498,6 +499,34 @@ export default function Users({ user, onLogout }) {
                                 onClick={confirmPopup.onConfirm}
                             >
                                 {confirmPopup.confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutConfirm && (
+                <div className="modal-overlay">
+                    <div className="logout-modal-content">
+                        <div className="modal-icon warning">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                        </div>
+                        <h3 className="modal-title">Sign Out</h3>
+                        <p className="modal-text">Are you sure you want to log out of your account?</p>
+                        <div className="modal-actions" style={{ marginTop: '0', width: '100%', display: 'flex' }}>
+                            <button className="btn-secondary" onClick={() => setShowLogoutConfirm(false)}>
+                                Cancel
+                            </button>
+                            <button className="btn-danger" onClick={() => {
+                                setShowLogoutConfirm(false);
+                                onLogout();
+                            }}>
+                                Logout
                             </button>
                         </div>
                     </div>
