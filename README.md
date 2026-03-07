@@ -14,7 +14,7 @@ dashboard.
 
 1. Clone the repository from GitHub.
 
-2. Configure environment variables by modifying the `.env.example` file's content  and renaming it to `.env`.
+2. Configure environment variables by modifying the `.env.example` file's content  with your MongoDB connection string and other details and rename it to `.env`.
 
 3. Install backend dependencies and start the backend server.
 
@@ -91,6 +91,9 @@ Admin can:
 -   Create users
 -   Create other admins
 -   Delete users
+-   Handle support tickets via mail
+-   Edit user's details
+-   Deactivate a user, and more
 
 ## Security
 
@@ -121,29 +124,39 @@ Admin can:
 
 # Project Structure
 
-    project
+    user-management
     │
     ├ backend
     │   ├ models
     │   │   └ User.js
     │   |   └ OTP.js
-    │   │ 
+    │   |   └ SupportTicket.js
+    │   │   └ Activity.js
+    │   |   └ Notification.js
     │   │
     │   ├ routes
     │   │   ├ auth.js
     │   │   └ users.js
+    │   |   └ support.js
+    │   |   └ activity.js
+    │   |   └ notification.js   
     │   │
     │   ├ middleware
     │   │   └ auth.js
     │   │
+    │   ├ utils
+    │   │   └ sendEmail.js
+    │   │
     │   ├ seedAdmin.js
     │   ├ server.js
+    │   ├ dropNotifIndex.js
     │   └ package.json
     │
     ├ frontend
     │   ├ src
     │   ├ api.js
-    │   └ vite.config.js
+    │   ├ vite.config.js
+    │   └ package.json
     │
     └ README.md
 
@@ -173,8 +186,10 @@ Create `.env` file:
     PORT=5000
     MONGO_URI=your_mongodb_connection_string
     JWT_SECRET=your_secret_key
+
     ADMIN_EMAIL=admin@test.com
     ADMIN_PASSWORD=admin123
+
     SMTP_USER=your_gmail_address@gmail.com
     SMTP_PASS=your_gmail_16_digit_app_password(with no space)
 
@@ -302,6 +317,7 @@ Deletes a user.
 -   JWT is used for authentication
 -   Admin-only routes are protected using middleware
 -   `/register` cannot create admin users directly
+-   OTP verification is used for user registration 
 
 ------------------------------------------------------------------------
 
