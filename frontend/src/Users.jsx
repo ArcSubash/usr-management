@@ -269,7 +269,7 @@ export default function Users({ user, onLogout }) {
     return (
         <div className="dashboard-container">
             <header className="dashboard-header">
-                <h2 className="dashboard-title">✨ Tamizhan Intern</h2>
+                <h2 className="dashboard-title">User Management System</h2>
 
                 <div className="user-info">
                     <span className="user-greeting">
