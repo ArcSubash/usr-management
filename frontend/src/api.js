@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-    baseURL: "https://usr-mng-deploy-bknd.onrender.com/api",
+    baseURL: "https://usr-mng-bknd.onrender.com/api",
 });
 
 api.interceptors.request.use((config) => {
