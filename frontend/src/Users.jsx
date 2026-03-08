@@ -260,7 +260,7 @@ export default function Users({ user, onLogout }) {
     const formatDate = (dateString) => {
         try {
             const d = new Date(dateString);
-            return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
         } catch {
             return dateString;
         }

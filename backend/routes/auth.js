@@ -160,7 +160,7 @@ router.post("/login", emailValidation, handleValidationErrors, async (req, res) 
             userId: user._id,
             type: "login",
             title: "New Login Detected",
-            message: `You logged in on ${new Date().toLocaleString()}`,
+            message: `You logged in on ${new Date().toLocaleString("en-GB")}`,
             icon: "🔐",
         });
 
