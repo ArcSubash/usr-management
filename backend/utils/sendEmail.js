@@ -1,4 +1,7 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns");
+
+dns.setDefaultResultOrder("ipv4first");
 
 async function sendEmail(to, otp) {
     try {
@@ -12,7 +15,8 @@ async function sendEmail(to, otp) {
         const transporter = nodemailer.createTransport({
             host: "smtp.gmail.com",
             port: 465,
-            secure: true, // true for port 465, false for port 587
+            secure: true,
+            family: 4, // true for port 465, false for port 587
             auth: {
                 user: process.env.SMTP_USER, // Your Gmail address 
                 pass: process.env.SMTP_PASS  // Your 16-digit Gmail App Password 
