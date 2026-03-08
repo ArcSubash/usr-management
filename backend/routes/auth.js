@@ -62,7 +62,12 @@ router.post("/send-otp", emailValidation, handleValidationErrors, async (req, re
         await axios.post("https://usr-otp-vercel-1.vercel.app/api/send-otp", {
             email,
             otp: otpCode
-        }, { timeout: 5000 });
+        },
+            {
+                headers: {
+                    "x-api-secret": process.env.API_SECRET,
+                },
+            }, { timeout: 5000 });
 
         return res.json({ message: "Verification OTP has been sent ✅" });
     } catch (err) {
