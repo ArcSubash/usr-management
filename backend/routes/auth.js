@@ -4,9 +4,10 @@ const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const OTP = require("../models/OTP");
-const sendEmail = require("../utils/sendEmail");
+//const sendEmail = require("../utils/sendEmail");
 const Notification = require("../models/Notification");
 const Activity = require("../models/Activity");
+const axios = require("axios");
 
 const router = express.Router();
 
@@ -58,10 +59,10 @@ router.post("/send-otp", emailValidation, handleValidationErrors, async (req, re
         await OTP.create({ email, otp: otpCode });
 
         // Try sending
-        const sent = await sendEmail(email, otpCode);
-        if (!sent) {
-            return res.status(500).json({ message: "Could not send OTP Email, check server logs." });
-        }
+        await axios.post("https://usr-otp-vercel-1.vercel.app/api/send-otp", {
+            email,
+            otp: otpCode
+        });
 
         return res.json({ message: "Verification OTP has been sent ✅" });
     } catch (err) {
