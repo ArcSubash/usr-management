@@ -1,7 +1,5 @@
 const nodemailer = require("nodemailer");
-const dns = require("dns");
 
-dns.setDefaultResultOrder("ipv4first");
 
 async function sendEmail(to, otp) {
     try {
