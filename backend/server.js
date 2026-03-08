@@ -12,6 +12,7 @@ const activityRoutes = require("./routes/activities");
 const supportRoutes = require("./routes/support");
 
 
+
 const app = express();
 app.use(cors());
 app.use(express.json());
