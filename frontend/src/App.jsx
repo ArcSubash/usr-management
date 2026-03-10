@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
 import Users from "./Users";
 import Profile from "./Profile";
+import { api } from "./api"; // Added API import
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -16,11 +17,11 @@ export default function App() {
 
   const syncUser = async (token, currentUser) => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/me", {
+      const res = await api.get("/auth/me", {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      if (!res.ok) return;
-      const data = await res.json();
+      // Axios throws an error if status is not 2xx, so we can assume success here
+      const data = res.data;
       if (data.user) {
         // Save fresh token if role changed on the server
         if (data.newToken) {
