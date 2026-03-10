@@ -58,8 +58,8 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     const [activityPagination, setActivityPagination] = useState({ page: 1, totalPages: 1 });
 
     // Fetch notifications
-    const fetchNotifications = useCallback(async () => {
-        setNotifLoading(true);
+    const fetchNotifications = useCallback(async (showLoading = true) => {
+        if (showLoading) setNotifLoading(true);
         try {
             const res = await api.get("/notifications");
             setNotifications(res.data.notifications);
@@ -72,8 +72,8 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     }, []);
 
     // Fetch activities
-    const fetchActivities = useCallback(async (page = 1) => {
-        setActivityLoading(true);
+    const fetchActivities = useCallback(async (page = 1, showLoading = true) => {
+        if (showLoading) setActivityLoading(true);
         try {
             const res = await api.get(`/activities?page=${page}&limit=15`);
             setActivities(res.data.activities);
@@ -88,6 +88,12 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     useEffect(() => {
         fetchNotifications();
         fetchActivities();
+
+        const interval = setInterval(() => {
+            fetchNotifications(false);
+        }, 5000); // Poll notifications every 5 seconds for real-time updates
+
+        return () => clearInterval(interval);
     }, [fetchNotifications, fetchActivities]);
 
     // Mark a notification as read
