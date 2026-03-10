@@ -1,0 +1,153 @@
+.footer-container {
+  width: 100%;
+  padding: 3rem 1rem;
+  margin-top: auto;
+  /* Ultimate Seamless Glass: 100% transparent base to show page background */
+  background: transparent;
+  backdrop-filter: blur(35px) saturate(200%);
+  -webkit-backdrop-filter: blur(35px) saturate(200%);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 100;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fluid Mesh Gradients (Liquid Glass Effect) */
+.footer-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 10% 20%, rgba(129, 140, 248, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(192, 132, 252, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+  filter: blur(30px);
+  animation: liquidShift 25s ease-in-out infinite alternate;
+  z-index: 1;
+  pointer-events: none;
+}
+
+@keyframes liquidShift {
+  0% {
+    transform: translate(0, 0) scale(1.1) rotate(0deg);
+  }
+
+  33% {
+    transform: translate(-5%, 5%) scale(1.2) rotate(2deg);
+  }
+
+  66% {
+    transform: translate(5%, -2%) scale(1.15) rotate(-1deg);
+  }
+
+  100% {
+    transform: translate(-2%, 8%) scale(1.1) rotate(0deg);
+  }
+}
+
+/* Subtle accent glow at the junction point */
+.footer-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(139, 92, 246, 0.4),
+      rgba(59, 130, 246, 0.4),
+      rgba(244, 114, 182, 0.4),
+      transparent);
+  box-shadow: 0 -5px 15px rgba(139, 92, 246, 0.2);
+  z-index: 3;
+}
+
+.footer-content {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+  position: relative;
+  z-index: 4;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-link {
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.7);
+  text-decoration: none;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.6rem 1.4rem;
+  border-radius: 99px;
+  /* Pill Link */
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.footer-link:hover {
+  color: #ffffff;
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-6px) scale(1.08);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.separator {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 1.2rem;
+}
+
+.copyright-text {
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.7);
+  margin: 0;
+  letter-spacing: 0.15em;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 700;
+}
+
+.dev-name {
+  font-weight: 800;
+  background: linear-gradient(135deg, #60a5fa, #c084fc, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding: 0 4px;
+}
+
+@media (max-width: 640px) {
+  .footer-container {
+    padding: 2.5rem 1rem;
+  }
+
+  .footer-links {
+    gap: 1rem;
+  }
+
+  .separator {
+    display: none;
+  }
+
+  .footer-link {
+    width: 45%;
+    text-align: center;
+  }
+}
