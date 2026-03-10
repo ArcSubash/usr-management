@@ -564,6 +564,7 @@ export default function Users({ user, onLogout }) {
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Role</th>
+                                    <th>Status</th>
                                     <th>Registered</th>
                                     <th style={{ textAlign: "right" }}>Actions</th>
                                 </tr>
@@ -571,7 +572,7 @@ export default function Users({ user, onLogout }) {
                             <tbody>
                                 {users.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+                                        <td colSpan="6" style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
                                             No users found. Loading...
                                         </td>
                                     </tr>
@@ -639,9 +640,22 @@ export default function Users({ user, onLogout }) {
                                                         </span>
                                                     )}
                                                 </td>
+                                                <td>
+                                                    <span style={{
+                                                        fontSize: "0.75rem",
+                                                        fontWeight: "bold",
+                                                        padding: "0.2rem 0.6rem",
+                                                        borderRadius: "12px",
+                                                        backgroundColor: u.deactivated ? "rgba(239, 68, 68, 0.1)" : "rgba(34, 197, 94, 0.1)",
+                                                        color: u.deactivated ? "#ef4444" : "#22c55e",
+                                                        border: `1px solid ${u.deactivated ? "rgba(239, 68, 68, 0.3)" : "rgba(34, 197, 94, 0.3)"}`
+                                                    }}>
+                                                        {u.deactivated ? "Inactive" : "Active"}
+                                                    </span>
+                                                </td>
                                                 <td>{u.createdAt ? formatDate(u.createdAt) : "-"}</td>
                                                 <td style={{ textAlign: "right" }}>
-                                                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                                                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", alignItems: "center" }}>
                                                         {!isSelf && (
                                                             <>
                                                                 <button

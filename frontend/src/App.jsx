@@ -65,16 +65,30 @@ export default function App() {
     }
   }, []);
 
-  // Real-time polling: check for deactivation/reactivation every 10 seconds
+  // Real-time server sent events: listen for status updates instantly
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!user || !token) return;
 
-    const interval = setInterval(() => {
-      syncUser(token);
-    }, 10000);
+    const eventSource = new EventSource(`http://localhost:5000/api/auth/stream?token=${token}`);
 
-    return () => clearInterval(interval);
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'status_update') {
+          syncUser(token);
+        }
+      } catch (e) {
+        console.error("Error parsing SSE data", e);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("EventSource failed:", err);
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
   }, [user?.id]);
 
   function handleLogin(u) {

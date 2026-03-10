@@ -221,5 +221,27 @@ router.get("/me", auth, async (req, res) => {
         return res.status(500).json({ message: "Server error" });
     }
 });
+// GET SSE STREAM
+router.get("/stream", auth, (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const userEvents = require('../utils/events');
+
+    const handleUpdate = (data) => {
+        if (data.userId === req.user.id) {
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+        }
+    };
+
+    userEvents.on('userUpdate', handleUpdate);
+
+    // If client closes connection, stop listening
+    req.on('close', () => {
+        userEvents.off('userUpdate', handleUpdate);
+    });
+});
 
 module.exports = router;

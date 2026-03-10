@@ -215,6 +215,14 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
 
     await user.save();
 
+    const userEvents = require('../utils/events');
+    userEvents.emit('userUpdate', {
+      userId: user._id.toString(),
+      type: 'status_update',
+      deactivated: user.deactivated,
+      role: user.role
+    });
+
     // Do not send passwordHash back
     res.json({
       message: "User updated ✅",
