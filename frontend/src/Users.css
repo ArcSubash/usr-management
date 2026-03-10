@@ -1,15 +1,12 @@
 .dashboard-container {
     min-height: 100vh;
-    width: 100vw;
+    width: 100%;
     background: #0f172a;
     color: #e2e8f0;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    position: absolute;
-    top: 0;
-    left: 0;
 }
 
 @keyframes countPop {

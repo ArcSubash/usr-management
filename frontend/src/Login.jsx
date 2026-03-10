@@ -249,90 +249,92 @@ export default function Login({ onLogin }) {
                 }}
             />
 
-            <div className="login-card" style={{ ...cardTilt, ...cardGlowStyle }}>
-                <h2 className="login-title">{isRegistering ? "Create Account" : "Welcome Back"}</h2>
+            <div className="login-content" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', zIndex: 2 }}>
+                <div className="login-card" style={{ ...cardTilt, ...cardGlowStyle }}>
+                    <h2 className="login-title">{isRegistering ? "Create Account" : "Welcome Back"}</h2>
 
-                {successMessage && <div className="success-message">{successMessage}</div>}
+                    {successMessage && <div className="success-message">{successMessage}</div>}
 
-                <form onSubmit={handleSubmit}>
-                    {isRegistering && (
-                        <div className="input-group">
-                            <label className="input-label">Name</label>
-                            <input
-                                className="login-input"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Your Name"
-                                required={isRegistering}
-                            />
-                        </div>
-                    )}
-
-                    <div className="input-group">
-                        <label className="input-label">Email</label>
-                        <input
-                            className={`login-input ${isRegistering && emailError ? 'login-input-error' : (isRegistering && email && !validateEmail(email) ? 'login-input-valid' : '')}`}
-                            type="email"
-                            value={email}
-                            onChange={(e) => handleEmailChange(e.target.value)}
-                            placeholder={isRegistering ? "you@example.com" : "admin@test.com"}
-                            required
-                        />
-                        {isRegistering && emailError && (
-                            <span className="login-field-error">{emailError}</span>
+                    <form onSubmit={handleSubmit}>
+                        {isRegistering && (
+                            <div className="input-group">
+                                <label className="input-label">Name</label>
+                                <input
+                                    className="login-input"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Your Name"
+                                    required={isRegistering}
+                                />
+                            </div>
                         )}
-                    </div>
 
-                    <div className="input-group">
-                        <label className="input-label">Password</label>
-                        <input
-                            className={`login-input ${isRegistering && passwordError ? 'login-input-error' : (isRegistering && password && !validatePassword(password) ? 'login-input-valid' : '')}`}
-                            type="password"
-                            value={password}
-                            onChange={(e) => handlePasswordChange(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                        />
-                        {isRegistering && passwordError && (
-                            <span className="login-field-error">{passwordError}</span>
-                        )}
-                    </div>
-
-                    {isOtpSent && isRegistering && (
                         <div className="input-group">
-                            <label className="input-label">Verification OTP</label>
+                            <label className="input-label">Email</label>
                             <input
-                                className="login-input check-otp"
-                                type="text"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                placeholder="6-digit code"
-                                maxLength={6}
+                                className={`login-input ${isRegistering && emailError ? 'login-input-error' : (isRegistering && email && !validateEmail(email) ? 'login-input-valid' : '')}`}
+                                type="email"
+                                value={email}
+                                onChange={(e) => handleEmailChange(e.target.value)}
+                                placeholder={isRegistering ? "you@example.com" : "admin@test.com"}
                                 required
-                                style={{ letterSpacing: "0.2em", textAlign: "center", fontSize: "1.2rem" }}
                             />
+                            {isRegistering && emailError && (
+                                <span className="login-field-error">{emailError}</span>
+                            )}
                         </div>
-                    )}
 
-                    {error && <div className="error-message">{error}</div>}
+                        <div className="input-group">
+                            <label className="input-label">Password</label>
+                            <input
+                                className={`login-input ${isRegistering && passwordError ? 'login-input-error' : (isRegistering && password && !validatePassword(password) ? 'login-input-valid' : '')}`}
+                                type="password"
+                                value={password}
+                                onChange={(e) => handlePasswordChange(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                            />
+                            {isRegistering && passwordError && (
+                                <span className="login-field-error">{passwordError}</span>
+                            )}
+                        </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="login-button"
-                    >
-                        {loading
-                            ? (isRegistering ? (isOtpSent ? "Verifying..." : "Sending OTP...") : "Logging in...")
-                            : (isRegistering ? (isOtpSent ? "Verify & Create Account" : "Sign Up") : "Login")}
-                    </button>
+                        {isOtpSent && isRegistering && (
+                            <div className="input-group">
+                                <label className="input-label">Verification OTP</label>
+                                <input
+                                    className="login-input check-otp"
+                                    type="text"
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value)}
+                                    placeholder="6-digit code"
+                                    maxLength={6}
+                                    required
+                                    style={{ letterSpacing: "0.2em", textAlign: "center", fontSize: "1.2rem" }}
+                                />
+                            </div>
+                        )}
 
-                    <div className="toggle-mode">
-                        {isRegistering ? "Already have an account?" : "Don't have an account?"}
-                        <button type="button" onClick={toggleMode} className="toggle-button">
-                            {isRegistering ? "Log in" : "Sign up"}
+                        {error && <div className="error-message">{error}</div>}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="login-button"
+                        >
+                            {loading
+                                ? (isRegistering ? (isOtpSent ? "Verifying..." : "Sending OTP...") : "Logging in...")
+                                : (isRegistering ? (isOtpSent ? "Verify & Create Account" : "Sign Up") : "Login")}
                         </button>
-                    </div>
-                </form>
+
+                        <div className="toggle-mode">
+                            {isRegistering ? "Already have an account?" : "Don't have an account?"}
+                            <button type="button" onClick={toggleMode} className="toggle-button">
+                                {isRegistering ? "Log in" : "Sign up"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );

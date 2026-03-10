@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
 import Users from "./Users";
 import Profile from "./Profile";
+import Footer from "./components/Footer"; // Added Footer import
 import { api } from "./api"; // Added API import
 
 export default function App() {
@@ -89,7 +90,13 @@ export default function App() {
   }
 
   return (
-    <>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      minHeight: '100vh',
+      backgroundColor: '#0f172a', // Set base background to match Users/Profile theme
+      position: 'relative'
+    }}>
       {/* Real-time Toast Notification */}
       {toast && (
         <div style={{
@@ -159,13 +166,21 @@ export default function App() {
           to   { opacity: 1; transform: translateX(0); }
         }
       `}</style>
-
-      {!user
-        ? <Login onLogin={handleLogin} />
-        : user.role === "admin"
-          ? <Users user={user} onLogout={handleLogout} />
-          : <Profile user={user} onLogout={handleLogout} onUpdateUser={setUser} />
-      }
-    </>
+      
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {!user ? (
+          <Login onLogin={handleLogin} />
+        ) : (
+          <>
+            {user.role === "admin" ? (
+              <Users user={user} onLogout={handleLogout} />
+            ) : (
+              <Profile user={user} onLogout={handleLogout} onUpdateUser={setUser} />
+            )}
+            <Footer />
+          </>
+        )}
+      </main>
+    </div>
   );
 }
