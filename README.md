@@ -8,6 +8,18 @@ This project allows administrators to manage users securely through a
 dashboard.
 
 ------------------------------------------------------------------------
+
+# Live Deployment
+
+I have also deployed the project online, using render and vercel, with some tweeks in the code. I have hosted Frontend and Backend in Render, and OTP sending service in Vercel, and connnected it using API.
+
+Frontend (Render):
+https://usr-mng.onrender.com  ---> Site Link
+
+Backend API (Render):
+https://usr-mng-bknd.onrender.com
+
+------------------------------------------------------------------------
 # FIRSTLY MODIFY THE `.env.example` file's content with your mongodb connection string and other details and rename it to `.env`
 ------------------------------------------------------------------------
 # Mongo DB Setup
