@@ -564,6 +564,7 @@ export default function Users({ user, onLogout }) {
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Role</th>
+                                    <th style={{ textAlign: "center" }}>Status</th>
                                     <th>Registered</th>
                                     <th style={{ textAlign: "right" }}>Actions</th>
                                 </tr>
@@ -638,6 +639,19 @@ export default function Users({ user, onLogout }) {
                                                             {u.role}
                                                         </span>
                                                     )}
+                                                </td>
+                                                <td style={{ textAlign: "center" }}>
+                                                    <span style={{
+                                                        padding: "4px 10px",
+                                                        borderRadius: "6px",
+                                                        fontSize: "0.75rem",
+                                                        fontWeight: 600,
+                                                        background: u.deactivated ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)",
+                                                        color: u.deactivated ? "#ef4444" : "#10b981",
+                                                        border: `1px solid ${u.deactivated ? "rgba(239, 68, 68, 0.3)" : "rgba(16, 185, 129, 0.3)"}`
+                                                    }}>
+                                                        {u.deactivated ? "Inactive" : "Active"}
+                                                    </span>
                                                 </td>
                                                 <td>{u.createdAt ? formatDate(u.createdAt) : "-"}</td>
                                                 <td style={{ textAlign: "right" }}>
