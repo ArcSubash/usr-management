@@ -108,7 +108,7 @@ export default function App() {
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100vh',
-      backgroundColor: '#0f172a',
+      backgroundColor: 'var(--bg-primary)',
       position: 'relative',
       overflowX: 'hidden'
     }}>
@@ -127,11 +127,9 @@ export default function App() {
           gap: '0.75rem',
           boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           animation: 'slideInRight 0.35s ease',
-          backgroundColor: toast.type === 'deactivated'
-            ? 'rgba(20, 8, 8, 0.97)'
-            : 'rgba(8, 20, 12, 0.97)',
+          backgroundColor: 'rgba(20, 20, 20, 0.95)',
           border: `1px solid ${toast.type === 'deactivated' ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`,
-          backdropFilter: 'blur(12px)',
+          backdropFilter: 'blur(20px)',
         }}>
           <div style={{
             fontSize: '1.5rem',
@@ -152,7 +150,7 @@ export default function App() {
             </div>
             <div style={{
               fontSize: '0.82rem',
-              color: '#94a3b8',
+              color: 'var(--text-secondary)',
               lineHeight: 1.5,
               fontFamily: 'Inter, sans-serif',
             }}>

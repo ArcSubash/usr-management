@@ -16,8 +16,8 @@ export default function Dashboard({ user }) {
             <main className="dashboard-content" style={{ display: 'block', maxWidth: '800px', margin: '2rem auto' }}>
                 <section className="panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
                     <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>👋</div>
-                    <h2 style={{ margin: '0 0 1rem 0', color: '#f8fafc', fontSize: '2rem' }}>Welcome Back, {user?.name}!</h2>
-                    <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.6' }}>
+                    <h2 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '2rem' }}>Welcome Back, {user?.name}!</h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6' }}>
                         This is your primary dashboard. You can access your User Settings, view notifications, and manage your account by clicking the <b>Settings</b> link in the top menu bar.
                     </p>
 
@@ -26,7 +26,7 @@ export default function Dashboard({ user }) {
                             marginTop: '2rem',
                             padding: '1rem 1.5rem',
                             backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
                             borderRadius: '12px',
                             color: '#ef4444',
                             display: 'flex',
@@ -43,7 +43,7 @@ export default function Dashboard({ user }) {
                             </div>
                             <div>
                                 <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem' }}>Account Deactivated</h3>
-                                <p style={{ margin: 0, fontSize: '0.9rem', color: '#fca5a5' }}>
+                                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                                     Your account has been deactivated by an administrator. You can no longer update your profile settings. Contact support for more information.
                                 </p>
                             </div>
