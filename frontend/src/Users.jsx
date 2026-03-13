@@ -318,7 +318,7 @@ export default function Users({ user, onLogout }) {
                         className="btn-notif"
                         onClick={() => setShowMailsModal(true)}
                         title="User Support Mails"
-                        style={{ marginRight: '8px', background: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", border: "1px solid rgba(59, 130, 246, 0.2)", width: 'auto', padding: '0 12px', gap: '6px' }}
+                        style={{ marginRight: '8px', background: "rgba(255, 255, 255, 0.1)", color: "#ffffff", border: "1px solid rgba(255, 255, 255, 0.2)", width: 'auto', padding: '0 12px', gap: '6px' }}
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block", flexShrink: 0 }}>
                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -376,8 +376,8 @@ export default function Users({ user, onLogout }) {
                                     position: "absolute",
                                     top: "-5px",
                                     right: "-5px",
-                                    background: "linear-gradient(135deg,#ef4444,#f97316)",
-                                    color: "#fff",
+                                    background: "#ffffff",
+                                    color: "#000000",
                                     fontSize: "0.6rem",
                                     fontWeight: 700,
                                     minWidth: "17px",
@@ -387,7 +387,7 @@ export default function Users({ user, onLogout }) {
                                     alignItems: "center",
                                     justifyContent: "center",
                                     padding: "0 3px",
-                                    border: "2px solid #0f172a",
+                                    border: "2px solid #000000",
                                 }}>{unreadCount > 9 ? "9+" : unreadCount}</span>
                             )}
                         </button>
@@ -511,9 +511,9 @@ export default function Users({ user, onLogout }) {
                                 display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                background: "rgba(59,130,246,0.15)",
-                                color: "#60a5fa",
-                                border: "1px solid rgba(59,130,246,0.25)",
+                                background: "rgba(255, 255, 255, 0.1)",
+                                color: "#ffffff",
+                                border: "1px solid rgba(255, 255, 255, 0.2)",
                                 borderRadius: "9999px",
                                 fontSize: "0.78rem",
                                 fontWeight: 700,
@@ -564,7 +564,7 @@ export default function Users({ user, onLogout }) {
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Role</th>
-                                    <th style={{ textAlign: "center" }}>Status</th>
+                                    <th>Status</th>
                                     <th>Registered</th>
                                     <th style={{ textAlign: "right" }}>Actions</th>
                                 </tr>
@@ -572,7 +572,7 @@ export default function Users({ user, onLogout }) {
                             <tbody>
                                 {users.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+                                        <td colSpan="6" style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
                                             No users found. Loading...
                                         </td>
                                     </tr>
@@ -591,9 +591,9 @@ export default function Users({ user, onLogout }) {
                                                             className="role-toggle-btn"
                                                             title={`Click to change to ${u.role === "admin" ? "user" : "admin"}`}
                                                             style={{
-                                                                background: u.role === "admin" ? "rgba(139, 92, 246, 0.2)" : undefined,
-                                                                color: u.role === "admin" ? "#c4b5fd" : undefined,
-                                                                borderColor: u.role === "admin" ? "rgba(139, 92, 246, 0.3)" : undefined,
+                                                                background: u.role === "admin" ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                                                                color: "#ffffff",
+                                                                borderColor: "rgba(255, 255, 255, 0.2)",
                                                             }}
                                                             onClick={() => {
                                                                 const newR = u.role === "admin" ? "user" : "admin";
@@ -631,36 +631,36 @@ export default function Users({ user, onLogout }) {
                                                         <span
                                                             className="role-badge"
                                                             style={{
-                                                                background: u.role === "admin" ? "rgba(139, 92, 246, 0.2)" : undefined,
-                                                                color: u.role === "admin" ? "#c4b5fd" : undefined,
-                                                                borderColor: u.role === "admin" ? "rgba(139, 92, 246, 0.3)" : undefined,
+                                                                background: u.role === "admin" ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                                                                color: "#ffffff",
+                                                                borderColor: "rgba(255, 255, 255, 0.2)",
                                                             }}
                                                         >
                                                             {u.role}
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td style={{ textAlign: "center" }}>
+                                                <td>
                                                     <span style={{
-                                                        padding: "4px 10px",
-                                                        borderRadius: "6px",
                                                         fontSize: "0.75rem",
-                                                        fontWeight: 600,
-                                                        background: u.deactivated ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)",
-                                                        color: u.deactivated ? "#ef4444" : "#10b981",
-                                                        border: `1px solid ${u.deactivated ? "rgba(239, 68, 68, 0.3)" : "rgba(16, 185, 129, 0.3)"}`
+                                                        fontWeight: "bold",
+                                                        padding: "0.2rem 0.6rem",
+                                                        borderRadius: "12px",
+                                                        backgroundColor: u.deactivated ? "rgba(239, 68, 68, 0.15)" : "rgba(34, 197, 94, 0.15)",
+                                                        color: u.deactivated ? "#ef4444" : "#22c55e",
+                                                        border: `1px solid ${u.deactivated ? "rgba(239, 68, 68, 0.3)" : "rgba(34, 197, 94, 0.3)"}`
                                                     }}>
                                                         {u.deactivated ? "Inactive" : "Active"}
                                                     </span>
                                                 </td>
                                                 <td>{u.createdAt ? formatDate(u.createdAt) : "-"}</td>
                                                 <td style={{ textAlign: "right" }}>
-                                                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                                                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", alignItems: "center" }}>
                                                         {!isSelf && (
                                                             <>
                                                                 <button
                                                                     className="btn-secondary"
-                                                                    style={{ padding: "0.4rem 0.8rem", color: "#3B82F6", borderColor: "rgba(59, 130, 246, 0.3)" }}
+                                                                    style={{ padding: "0.4rem 0.8rem", color: "#ffffff", borderColor: "rgba(255, 255, 255, 0.3)" }}
                                                                     onClick={() => openEditModal(u)}
                                                                 >
                                                                     Edit

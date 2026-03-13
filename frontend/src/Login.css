@@ -1,16 +1,17 @@
+/* Animated background and full viewport centering */
 .login-container {
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     width: 100%;
-    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0f0c29);
-    background-size: 400% 400%;
-    animation: bgGradient 15s ease infinite;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+    background-size: 100% 100%;
+    
+    /* Ensure it fills the screen perfectly */
+    position: relative;
     box-sizing: border-box;
     overflow: hidden;
-    position: relative;
 }
 
 /* ── Mouse-tracking spotlight ── */
@@ -69,42 +70,42 @@
 .trail-dot-0 {
     width: 12px;
     height: 12px;
-    background: rgba(139, 92, 246, 0.75);
-    box-shadow: 0 0 14px rgba(139, 92, 246, 0.5);
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.5);
 }
 
 .trail-dot-1 {
     width: 10px;
     height: 10px;
-    background: rgba(99, 102, 241, 0.6);
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
 }
 
 .trail-dot-2 {
     width: 8px;
     height: 8px;
-    background: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.35);
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
 }
 
 .trail-dot-3 {
     width: 6px;
     height: 6px;
-    background: rgba(110, 231, 183, 0.4);
-    box-shadow: 0 0 8px rgba(110, 231, 183, 0.3);
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 .trail-dot-4 {
     width: 4px;
     height: 4px;
-    background: rgba(167, 139, 250, 0.3);
-    box-shadow: 0 0 6px rgba(167, 139, 250, 0.2);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
 }
 
 .trail-dot-5 {
     width: 3px;
     height: 3px;
-    background: rgba(139, 92, 246, 0.2);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* ── Floating orbs ── */
@@ -132,7 +133,7 @@
 .orb-1 {
     width: 340px;
     height: 340px;
-    background: radial-gradient(circle, #6366f1, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%);
     top: -5%;
     left: 10%;
     animation: drift1 18s ease-in-out infinite alternate;
@@ -141,7 +142,7 @@
 .orb-2 {
     width: 260px;
     height: 260px;
-    background: radial-gradient(circle, #ec4899, transparent 70%);
+    background: radial-gradient(circle, rgba(200, 200, 200, 0.08), transparent 70%);
     bottom: 5%;
     right: 8%;
     animation: drift2 22s ease-in-out infinite alternate;
@@ -150,7 +151,7 @@
 .orb-3 {
     width: 200px;
     height: 200px;
-    background: radial-gradient(circle, #3b82f6, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 70%);
     top: 50%;
     left: 60%;
     animation: drift3 14s ease-in-out infinite alternate;
@@ -159,7 +160,7 @@
 .orb-4 {
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, #8b5cf6, transparent 70%);
+    background: radial-gradient(circle, rgba(180, 180, 180, 0.06), transparent 70%);
     bottom: 20%;
     left: -5%;
     animation: drift4 20s ease-in-out infinite alternate;
@@ -168,7 +169,7 @@
 .orb-5 {
     width: 180px;
     height: 180px;
-    background: radial-gradient(circle, #06b6d4, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.04), transparent 70%);
     top: 15%;
     right: 15%;
     animation: drift5 16s ease-in-out infinite alternate;
@@ -295,15 +296,15 @@
     width: 100%;
     max-width: 380px;
     padding: 3rem 2.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(15, 15, 15, 0.7);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
-    color: #fff;
+    color: var(--text-primary);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     animation: cardPopUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
     transition: transform 0.1s ease-out, box-shadow 0.3s ease-out;
@@ -329,11 +330,7 @@
     font-size: 2.2rem;
     font-weight: 800;
     text-align: center;
-    background: linear-gradient(to right, #6EE7B7, #3B82F6, #9333EA);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    color: #ffffff;
     letter-spacing: -1px;
     animation: staggerFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
@@ -421,16 +418,16 @@
 .login-button {
     width: 100%;
     padding: 1rem;
-    background: linear-gradient(135deg, #3B82F6, #9333EA);
+    background: #ffffff;
     border: none;
     border-radius: 12px;
-    color: #fff;
+    color: #000000;
     font-size: 1.05rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     margin-top: 0.5rem;
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
     letter-spacing: 0.5px;
     animation: staggerFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
 }

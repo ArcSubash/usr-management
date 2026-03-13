@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
 import Users from "./Users";
 import Profile from "./Profile";
-import Footer from "./components/Footer"; // Added Footer import
-import { api } from "./api"; // Added API import
+import Footer from "./components/Footer";
+import { api } from "./api";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -18,11 +18,11 @@ export default function App() {
 
   const syncUser = async (token, currentUser) => {
     try {
-      const res = await api.get("/auth/me", {
+      const res = await fetch("http://localhost:5000/api/auth/me", {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      // Axios throws an error if status is not 2xx, so we can assume success here
-      const data = res.data;
+      if (!res.ok) return;
+      const data = await res.json();
       if (data.user) {
         // Save fresh token if role changed on the server
         if (data.newToken) {
@@ -67,16 +67,30 @@ export default function App() {
     }
   }, []);
 
-  // Real-time polling: check for deactivation/reactivation every 10 seconds
+  // Real-time server sent events: listen for status updates instantly
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!user || !token) return;
 
-    const interval = setInterval(() => {
-      syncUser(token);
-    }, 10000);
+    const eventSource = new EventSource(`http://localhost:5000/api/auth/stream?token=${token}`);
 
-    return () => clearInterval(interval);
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'status_update') {
+          syncUser(token);
+        }
+      } catch (e) {
+        console.error("Error parsing SSE data", e);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("EventSource failed:", err);
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
   }, [user?.id]);
 
   function handleLogin(u) {
@@ -90,12 +104,13 @@ export default function App() {
   }
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
       minHeight: '100vh',
-      backgroundColor: '#0f172a', // Set base background to match Users/Profile theme
-      position: 'relative'
+      backgroundColor: 'var(--bg-primary)',
+      position: 'relative',
+      overflowX: 'hidden'
     }}>
       {/* Real-time Toast Notification */}
       {toast && (
@@ -112,11 +127,9 @@ export default function App() {
           gap: '0.75rem',
           boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           animation: 'slideInRight 0.35s ease',
-          backgroundColor: toast.type === 'deactivated'
-            ? 'rgba(20, 8, 8, 0.97)'
-            : 'rgba(8, 20, 12, 0.97)',
+          backgroundColor: 'rgba(20, 20, 20, 0.95)',
           border: `1px solid ${toast.type === 'deactivated' ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`,
-          backdropFilter: 'blur(12px)',
+          backdropFilter: 'blur(20px)',
         }}>
           <div style={{
             fontSize: '1.5rem',
@@ -137,7 +150,7 @@ export default function App() {
             </div>
             <div style={{
               fontSize: '0.82rem',
-              color: '#94a3b8',
+              color: 'var(--text-secondary)',
               lineHeight: 1.5,
               fontFamily: 'Inter, sans-serif',
             }}>
@@ -166,17 +179,19 @@ export default function App() {
           to   { opacity: 1; transform: translateX(0); }
         }
       `}</style>
-      
+
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {!user ? (
           <Login onLogin={handleLogin} />
         ) : (
           <>
-            {user.role === "admin" ? (
-              <Users user={user} onLogout={handleLogout} />
-            ) : (
-              <Profile user={user} onLogout={handleLogout} onUpdateUser={setUser} />
-            )}
+            <div style={{ flex: 1 }}>
+              {user.role === "admin" ? (
+                <Users user={user} onLogout={handleLogout} />
+              ) : (
+                <Profile user={user} onLogout={handleLogout} onUpdateUser={setUser} />
+              )}
+            </div>
             <Footer />
           </>
         )}

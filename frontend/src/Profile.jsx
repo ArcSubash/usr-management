@@ -58,8 +58,8 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     const [activityPagination, setActivityPagination] = useState({ page: 1, totalPages: 1 });
 
     // Fetch notifications
-    const fetchNotifications = useCallback(async (showLoading = true) => {
-        if (showLoading) setNotifLoading(true);
+    const fetchNotifications = useCallback(async () => {
+        setNotifLoading(true);
         try {
             const res = await api.get("/notifications");
             setNotifications(res.data.notifications);
@@ -72,8 +72,8 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     }, []);
 
     // Fetch activities
-    const fetchActivities = useCallback(async (page = 1, showLoading = true) => {
-        if (showLoading) setActivityLoading(true);
+    const fetchActivities = useCallback(async (page = 1) => {
+        setActivityLoading(true);
         try {
             const res = await api.get(`/activities?page=${page}&limit=15`);
             setActivities(res.data.activities);
@@ -88,12 +88,6 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     useEffect(() => {
         fetchNotifications();
         fetchActivities();
-
-        const interval = setInterval(() => {
-            fetchNotifications(false);
-        }, 5000); // Poll notifications every 5 seconds for real-time updates
-
-        return () => clearInterval(interval);
     }, [fetchNotifications, fetchActivities]);
 
     // Mark a notification as read
@@ -291,13 +285,13 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
 
     const getActivityColor = (action) => {
         switch (action) {
-            case "login": return "#3b82f6";
-            case "profile_update": return "#8b5cf6";
-            case "password_change": return "#f59e0b";
-            case "name_change": return "#8b5cf6";
-            case "account_created": return "#10b981";
-            case "logout": return "#ef4444";
-            default: return "#64748b";
+            case "login": return "#ffffff";
+            case "profile_update": return "#cccccc";
+            case "password_change": return "#888888";
+            case "name_change": return "#cccccc";
+            case "account_created": return "#ffffff";
+            case "logout": return "#444444";
+            default: return "#666666";
         }
     };
 
@@ -439,28 +433,28 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                 <main className="profile-content fade-in" style={{ display: 'block', maxWidth: '800px', margin: '2rem auto' }}>
                     <section className="profile-panel" style={{ textAlign: 'center', padding: '4rem 2rem', marginBottom: '2rem' }}>
                         <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
-                        <h2 style={{ margin: '0 0 1rem 0', color: '#f8fafc', fontSize: '2rem' }}>Welcome Back, {user?.name}!</h2>
-                        <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.6' }}>
+                        <h2 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '2rem' }}>Welcome Back, {user?.name}!</h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6' }}>
                             This is your primary dashboard. You can access your User Settings, view notifications, and manage your account by clicking the <b>Gear Icon</b> in the top right.
                         </p>
                     </section>
 
                     <section className="profile-panel" style={{ textAlign: 'left', padding: '3rem 2rem' }}>
-                        <h3 style={{ margin: '0 0 1.5rem 0', color: '#f8fafc', fontSize: '1.8rem', textAlign: 'center', fontWeight: '600' }}>
+                        <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-primary)', fontSize: '1.8rem', textAlign: 'center', fontWeight: '600' }}>
                             About Tamizhan Skills
                         </h3>
-                        <h3 style={{ margin: '0 0 1.5rem 0', color: '#f8fafc', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                        <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-primary)', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                             <span style={{ fontSize: '1.8rem' }}>🎓</span>
                             Tamizhan Skills – RISE Program
                         </h3>
                         <div style={{ position: 'relative', zIndex: 1 }}>
-                            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1rem' }}>
-                                <strong style={{ color: '#e2e8f0' }}>Tamizhan Skills</strong> is a Tamil Nadu-based ed-tech initiative that provides affordable skill training, internships, and career guidance for students.
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1rem' }}>
+                                <strong style={{ color: 'var(--text-primary)' }}>Tamizhan Skills</strong> is a Tamil Nadu-based ed-tech initiative that provides affordable skill training, internships, and career guidance for students.
                             </p>
-                            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1rem' }}>
-                                The <strong style={{ color: '#e2e8f0' }}>RISE (Real-time Internship & Skill Enhancement)</strong> program is a free virtual internship designed to help students gain hands-on experience through real projects, mentorship, and industry-relevant skills.
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1rem' }}>
+                                The <strong style={{ color: 'var(--text-primary)' }}>RISE (Real-time Internship & Skill Enhancement)</strong> program is a free virtual internship designed to help students gain hands-on experience through real projects, mentorship, and industry-relevant skills.
                             </p>
-                            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.7', margin: 0 }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.7', margin: 0 }}>
                                 It aims to bridge the gap between academic learning and practical industry exposure, helping students build portfolios and improve employability.
                             </p>
                         </div>
@@ -580,7 +574,7 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                                     <span className="role-badge" style={{
                                                         display: 'inline-block',
                                                         marginTop: '0.2rem',
-                                                        background: 'rgba(239, 68, 68, 0.2)',
+                                                        background: 'rgba(239, 68, 68, 0.15)',
                                                         color: '#ef4444',
                                                         borderColor: 'rgba(239, 68, 68, 0.3)'
                                                     }}>
@@ -590,9 +584,9 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                                     <span className="role-badge" style={{
                                                         display: 'inline-block',
                                                         marginTop: '0.2rem',
-                                                        background: 'rgba(16, 185, 129, 0.2)',
-                                                        color: '#34d399',
-                                                        borderColor: 'rgba(16, 185, 129, 0.3)'
+                                                        background: 'rgba(34, 197, 94, 0.15)',
+                                                        color: '#22c55e',
+                                                        borderColor: 'rgba(34, 197, 94, 0.3)'
                                                     }}>
                                                         Active
                                                     </span>
