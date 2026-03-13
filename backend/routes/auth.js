@@ -4,9 +4,10 @@ const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const OTP = require("../models/OTP");
-const sendEmail = require("../utils/sendEmail");
+//const sendEmail = require("../utils/sendEmail");
 const Notification = require("../models/Notification");
 const Activity = require("../models/Activity");
+const axios = require("axios");
 
 const router = express.Router();
 
@@ -189,6 +190,8 @@ router.post("/login", emailValidation, handleValidationErrors, async (req, res) 
     }
 });
 
+const eventEmitter = require("../utils/events");
+
 // GET CURRENT USER
 const { auth } = require("../middleware/auth");
 router.get("/me", auth, async (req, res) => {
@@ -221,27 +224,37 @@ router.get("/me", auth, async (req, res) => {
         return res.status(500).json({ message: "Server error" });
     }
 });
-// GET SSE STREAM
-router.get("/stream", auth, (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
 
-    const userEvents = require('../utils/events');
+// REAL-TIME SSE STREAM
+router.get("/stream", (req, res) => {
+    const { token } = req.query;
+    if (!token) return res.status(401).json({ message: "No token" });
 
-    const handleUpdate = (data) => {
-        if (data.userId === req.user.id) {
-            res.write(`data: ${JSON.stringify(data)}\n\n`);
-        }
-    };
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    userEvents.on('userUpdate', handleUpdate);
+        res.writeHead(200, {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        });
 
-    // If client closes connection, stop listening
-    req.on('close', () => {
-        userEvents.off('userUpdate', handleUpdate);
-    });
+        const onUpdate = (data) => {
+            // Only send status updates to the relevant user OR all admins
+            if (data.type === 'status_update') {
+                res.write(`data: ${JSON.stringify(data)}\n\n`);
+            }
+        };
+
+        eventEmitter.on("update", onUpdate);
+
+        req.on("close", () => {
+            eventEmitter.removeListener("update", onUpdate);
+        });
+
+    } catch (err) {
+        return res.status(401).json({ message: "Invalid token" });
+    }
 });
 
 module.exports = router;

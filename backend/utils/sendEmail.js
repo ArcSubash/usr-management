@@ -23,7 +23,7 @@ async function sendEmail(to, otp) {
             }
         });
 
-        // Verify SMTP connection immediately
+        // Verify SMTP connection immediately.
         try {
             await transporter.verify();
             console.log("✅ SMTP SERVER READY to take messages!");
