@@ -5,6 +5,8 @@ const Notification = require("../models/Notification");
 const Activity = require("../models/Activity");
 
 const router = express.Router();
+const eventEmitter = require("../utils/events");
+
 
 router.get("/", auth, adminOnly, async (req, res) => {
   const users = await User.find().select("-passwordHash").sort({ createdAt: -1 });
@@ -68,6 +70,7 @@ router.post("/", auth, adminOnly, async (req, res) => {
     });
 
     res.json({ message: "User created ✅", userId: user._id });
+    eventEmitter.emit("update", { type: "status_update" });
   } catch (err) {
     console.log("CREATE USER ERROR:", err);
     res.status(500).json({ message: "Server error" });
@@ -78,6 +81,7 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: "User deleted ✅" });
+    eventEmitter.emit("update", { type: "status_update" });
   } catch (err) {
     console.log("DELETE USER ERROR:", err);
     res.status(500).json({ message: "Server error" });
@@ -226,6 +230,7 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
         createdAt: user.createdAt
       }
     });
+    eventEmitter.emit("update", { type: "status_update" });
   } catch (err) {
     console.log("UPDATE USER ERROR:", err);
     res.status(500).json({ message: "Server error" });

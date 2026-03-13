@@ -77,15 +77,17 @@ export default function Users({ user, onLogout }) {
         }
     }
 
-    // Auto-refresh every 3 seconds for real-time count
+    // Real-time updates via SSE (triggered from App.jsx)
     useEffect(() => {
         function fetchAllData() {
             loadUsers();
-            fetchMails(false); // fetch without showing loading spinner
+            fetchMails(false);
         }
-        fetchAllData();
-        const interval = setInterval(fetchAllData, 3000);
-        return () => clearInterval(interval);
+        
+        fetchAllData(); // Initial load
+
+        window.addEventListener("db-update", fetchAllData);
+        return () => window.removeEventListener("db-update", fetchAllData);
     }, []);
 
     async function fetchMails(showSpinner = true) {

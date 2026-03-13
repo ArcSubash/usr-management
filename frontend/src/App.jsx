@@ -72,13 +72,17 @@ export default function App() {
     const token = localStorage.getItem("token");
     if (!user || !token) return;
 
-    const eventSource = new EventSource(`http://localhost:5000/api/auth/stream?token=${token}`);
+    const baseUrl = import.meta.env.VITE_API_URL || "https://usr-mng-bknd.onrender.com/api";
+    // Construct stream URL (remove /api from baseUrl if it ends with it, as EventSource URL needs to match the route)
+    const streamUrl = `${baseUrl.replace(/\/api$/, '')}/api/auth/stream?token=${token}`;
+    const eventSource = new EventSource(streamUrl);
 
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'status_update') {
           syncUser(token);
+          window.dispatchEvent(new Event("db-update"));
         }
       } catch (e) {
         console.error("Error parsing SSE data", e);

@@ -5,6 +5,8 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 
 const router = express.Router();
+const eventEmitter = require("../utils/events");
+
 
 // User: Create a support ticket
 router.post("/", auth, async (req, res) => {
@@ -42,6 +44,7 @@ router.post("/", auth, async (req, res) => {
         }
 
         res.status(201).json({ message: "Help request sent successfully", ticket });
+        eventEmitter.emit("update", { type: "status_update" });
     } catch (err) {
         console.error("CREATE SUPPORT TICKET ERROR:", err);
         res.status(500).json({ message: "Server error" });
@@ -91,6 +94,7 @@ router.put("/:id/resolve", auth, adminOnly, async (req, res) => {
         });
 
         res.json({ message: "Ticket resolved successfully", ticket });
+        eventEmitter.emit("update", { type: "status_update" });
     } catch (err) {
         console.error("RESOLVE TICKET ERROR:", err);
         res.status(500).json({ message: "Server error" });
@@ -102,6 +106,7 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
     try {
         await SupportTicket.findByIdAndDelete(req.params.id);
         res.json({ message: "Ticket deleted successfully" });
+        eventEmitter.emit("update", { type: "status_update" });
     } catch (err) {
         console.error("DELETE TICKET ERROR:", err);
         res.status(500).json({ message: "Server error" });

@@ -3,6 +3,8 @@ const Notification = require("../models/Notification");
 const { auth } = require("../middleware/auth");
 
 const router = express.Router();
+const eventEmitter = require("../utils/events");
+
 
 // Get all notifications for current user
 router.get("/", auth, async (req, res) => {
@@ -37,6 +39,7 @@ router.put("/:id/read", auth, async (req, res) => {
         }
 
         res.json({ message: "Marked as read", notification });
+        eventEmitter.emit("update", { type: "status_update" });
     } catch (err) {
         console.log("MARK READ ERROR:", err);
         res.status(500).json({ message: "Server error" });
@@ -52,6 +55,7 @@ router.put("/read-all", auth, async (req, res) => {
         );
 
         res.json({ message: "All notifications marked as read" });
+        eventEmitter.emit("update", { type: "status_update" });
     } catch (err) {
         console.log("MARK ALL READ ERROR:", err);
         res.status(500).json({ message: "Server error" });
@@ -71,6 +75,7 @@ router.delete("/:id", auth, async (req, res) => {
         }
 
         res.json({ message: "Notification deleted" });
+        eventEmitter.emit("update", { type: "status_update" });
     } catch (err) {
         console.log("DELETE NOTIFICATION ERROR:", err);
         res.status(500).json({ message: "Server error" });
@@ -82,6 +87,7 @@ router.delete("/", auth, async (req, res) => {
     try {
         await Notification.deleteMany({ userId: req.user.id });
         res.json({ message: "All notifications cleared" });
+        eventEmitter.emit("update", { type: "status_update" });
     } catch (err) {
         console.log("CLEAR NOTIFICATIONS ERROR:", err);
         res.status(500).json({ message: "Server error" });

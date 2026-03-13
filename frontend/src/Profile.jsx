@@ -86,8 +86,15 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     }, []);
 
     useEffect(() => {
-        fetchNotifications();
-        fetchActivities();
+        const refreshData = () => {
+            fetchNotifications();
+            fetchActivities();
+        };
+
+        refreshData(); // Initial internal load
+
+        window.addEventListener("db-update", refreshData);
+        return () => window.removeEventListener("db-update", refreshData);
     }, [fetchNotifications, fetchActivities]);
 
     // Mark a notification as read
@@ -155,8 +162,9 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     useEffect(() => {
         if (showHelpModal) {
             fetchMyTickets(true);
-            const interval = setInterval(() => fetchMyTickets(false), 3000);
-            return () => clearInterval(interval);
+            const refreshTickets = () => fetchMyTickets(false);
+            window.addEventListener("db-update", refreshTickets);
+            return () => window.removeEventListener("db-update", refreshTickets);
         }
     }, [showHelpModal, fetchMyTickets]);
 

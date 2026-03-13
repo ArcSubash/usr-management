@@ -195,6 +195,8 @@ router.post("/login", emailValidation, handleValidationErrors, async (req, res) 
     }
 });
 
+const eventEmitter = require("../utils/events");
+
 // GET CURRENT USER
 const { auth } = require("../middleware/auth");
 router.get("/me", auth, async (req, res) => {
@@ -225,6 +227,38 @@ router.get("/me", auth, async (req, res) => {
         });
     } catch (err) {
         return res.status(500).json({ message: "Server error" });
+    }
+});
+
+// REAL-TIME SSE STREAM
+router.get("/stream", (req, res) => {
+    const { token } = req.query;
+    if (!token) return res.status(401).json({ message: "No token" });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        res.writeHead(200, {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        });
+
+        const onUpdate = (data) => {
+            // Only send status updates to the relevant user OR all admins
+            if (data.type === 'status_update') {
+               res.write(`data: ${JSON.stringify(data)}\n\n`);
+            }
+        };
+
+        eventEmitter.on("update", onUpdate);
+
+        req.on("close", () => {
+            eventEmitter.removeListener("update", onUpdate);
+        });
+
+    } catch (err) {
+        return res.status(401).json({ message: "Invalid token" });
     }
 });
 
