@@ -5,6 +5,12 @@ import "./Profile.css";
 export default function Profile({ user, onLogout, onUpdateUser }) {
     const [name, setName] = useState(user.name || "");
     const email = user.email || "";
+
+    // Sync local name state when user prop updates
+    useEffect(() => {
+        setName(user?.name || "");
+    }, [user?.name]);
+
     const [currentPassword, setCurrentPassword] = useState("");
     const [password, setPassword] = useState("");
 

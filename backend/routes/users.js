@@ -162,6 +162,7 @@ router.put("/profile", auth, async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        deactivated: user.deactivated || false,
         createdAt: user.createdAt
       }
     });
@@ -227,6 +228,7 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        deactivated: user.deactivated || false,
         createdAt: user.createdAt
       }
     });

@@ -16,12 +16,20 @@ export default function App() {
     toastTimerRef.current = setTimeout(() => setToast(null), 6000);
   };
 
-  const syncUser = async (token, currentUser) => {
+  const syncUser = async (token) => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/me", {
+      const baseUrl = import.meta.env.VITE_API_URL || "https://usr-mng-bknd.onrender.com/api";
+      // Add cache-busting timestamp to ensure we get fresh data
+      const res = await fetch(`${baseUrl}/auth/me?t=${Date.now()}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (res.status === 401) {
+          console.error("Session expired, logging out...");
+          handleLogout();
+        }
+        return;
+      }
       const data = await res.json();
       if (data.user) {
         // Save fresh token if role changed on the server
