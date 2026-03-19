@@ -7,7 +7,7 @@ const OTP = require("../models/OTP");
 //const sendEmail = require("../utils/sendEmail");
 const Notification = require("../models/Notification");
 const Activity = require("../models/Activity");
-const axios = require("axios");
+//const axios = require("axios");
 
 const router = express.Router();
 
