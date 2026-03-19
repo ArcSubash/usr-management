@@ -43,7 +43,7 @@ function handleValidationErrors(req, res, next) {
     next();
 }
 
-// SEND OTP
+// SEND OTP (For registration)
 router.post("/send-otp", emailValidation, handleValidationErrors, async (req, res) => {
     try {
         const { email } = req.body;
@@ -68,6 +68,109 @@ router.post("/send-otp", emailValidation, handleValidationErrors, async (req, re
     } catch (err) {
         console.log("OTP ERROR:", err);
         return res.status(500).json({ message: "Server error generating OTP" });
+    }
+});
+
+// FORGOT PASSWORD OTP
+router.post("/forgot-password-otp", emailValidation, handleValidationErrors, async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "No account found with this email" });
+
+        // Generate 6 digit random number
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Create or update existing OTP token record for user
+        await OTP.findOneAndDelete({ email });
+        await OTP.create({ email, otp: otpCode });
+
+        // Try sending
+        const sent = await sendEmail(email, otpCode);
+        if (!sent) {
+            return res.status(500).json({ message: "Could not send OTP Email" });
+        }
+
+        return res.json({ message: "Password reset OTP has been sent ✅" });
+    } catch (err) {
+        console.log("OTP ERROR:", err);
+        return res.status(500).json({ message: "Server error generating OTP" });
+    }
+});
+
+// VERIFY RESET OTP
+router.post("/verify-reset-otp", emailValidation, handleValidationErrors, async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        const otpRecord = await OTP.findOne({ email });
+        if (!otpRecord) {
+            return res.status(400).json({ message: "OTP has expired or not found" });
+        }
+        if (otpRecord.otp !== otp) {
+            return res.status(400).json({ message: "Invalid OTP provided" });
+        }
+
+        return res.json({ message: "OTP verified. You can now reset your password ✅" });
+    } catch (err) {
+        return res.status(500).json({ message: "Server error" });
+    }
+});
+
+// RESET PASSWORD
+router.post("/reset-password", [
+    ...emailValidation,
+    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters")
+], handleValidationErrors, async (req, res) => {
+    try {
+        const { email, otp, password } = req.body;
+
+        // Final verification for security
+        const otpRecord = await OTP.findOne({ email });
+        if (!otpRecord || otpRecord.otp !== otp) {
+            return res.status(400).json({ message: "OTP session has expired or is invalid" });
+        }
+
+        // Password validation: alphanumeric matching register requirements
+        if (!/[a-zA-Z]/.test(password)) {
+            return res.status(400).json({ message: "Password must contain at least one letter" });
+        }
+        if (!/[0-9]/.test(password)) {
+            return res.status(400).json({ message: "Password must contain at least one number" });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        user.passwordHash = passwordHash;
+        await user.save();
+
+        // Clean up OTP record
+        await OTP.findByIdAndDelete(otpRecord._id);
+
+        // Notify user about password change
+        await Notification.create({
+            userId: user._id,
+            type: "password_change",
+            title: "Password Changed",
+            message: "Your password was successfully reset using OTP.",
+            icon: "🔑",
+        });
+
+        // Log activity
+        await Activity.create({
+            userId: user._id,
+            action: "password_change",
+            description: "Password was reset via OTP flow",
+            ipAddress: req.ip,
+        });
+
+        return res.json({ message: "Password changed successfully! Please log in ✅" });
+    } catch (err) {
+        console.log("RESET ERROR:", err);
+        return res.status(500).json({ message: "Server error resetting password" });
     }
 });
 

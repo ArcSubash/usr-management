@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "https://usr-mng-bknd.onrender.com/api",
+    baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
 // Attach token automatically (if present)

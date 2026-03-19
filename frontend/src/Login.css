@@ -486,6 +486,11 @@
     text-decoration: underline;
 }
 
+.forgot-password-link:hover {
+    color: #6EE7B7 !important;
+    text-decoration: underline;
+}
+
 /* ── Floating particles ── */
 .particle {
     position: absolute;

@@ -9,6 +9,11 @@ export default function Login({ onLogin }) {
     const [password, setPassword] = useState("");
     const [otp, setOtp] = useState("");
     const [isOtpSent, setIsOtpSent] = useState(false);
+    
+    // Forgot Password states
+    const [isResettingPassword, setIsResettingPassword] = useState(false);
+    const [resetStep, setResetStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
+    const [confirmPassword, setConfirmPassword] = useState("");
 
     const [error, setError] = useState("");
     const [emailError, setEmailError] = useState("");
@@ -181,21 +186,78 @@ export default function Login({ onLogin }) {
         }
     }
 
+    async function handleForgotPassword(e) {
+        e.preventDefault();
+        setError("");
+        setSuccessMessage("");
+        setLoading(true);
+
+        try {
+            if (resetStep === 1) {
+                // Step 1: Request OTP for password reset
+                await api.post("/auth/forgot-password-otp", { email });
+                setSuccessMessage("Password reset OTP sent to your email!");
+                setResetStep(2);
+            } else if (resetStep === 2) {
+                // Step 2: Verify OTP
+                await api.post("/auth/verify-reset-otp", { email, otp });
+                setSuccessMessage("OTP verified! Please enter your new password.");
+                setResetStep(3);
+            } else if (resetStep === 3) {
+                // Step 3: Reset Password
+                if (password !== confirmPassword) {
+                    setError("Passwords do not match");
+                    setLoading(false);
+                    return;
+                }
+                const passErr = validatePassword(password);
+                if (passErr) {
+                    setError(passErr);
+                    setLoading(false);
+                    return;
+                }
+                await api.post("/auth/reset-password", { email, otp, password });
+                setSuccessMessage("Password reset successful! You can now log in.");
+                setIsResettingPassword(false);
+                setResetStep(1);
+                setOtp("");
+                setPassword("");
+                setConfirmPassword("");
+            }
+        } catch (err) {
+            setError(err?.response?.data?.message || "Action failed");
+        } finally {
+            setLoading(false);
+        }
+    }
+
     const toggleMode = () => {
         setIsRegistering(!isRegistering);
+        setIsResettingPassword(false);
+        setResetStep(1);
         setError("");
         setEmailError("");
         setPasswordError("");
         setSuccessMessage("");
         if (!isRegistering) {
-            // When switching to register, clear demo credentials
             setEmail("");
             setPassword("");
         } else {
-            // Switching back to login, reset registration flow
             setIsOtpSent(false);
             setOtp("");
         }
+    };
+
+    const toggleResetMode = () => {
+        setIsResettingPassword(!isResettingPassword);
+        setIsRegistering(false);
+        setResetStep(1);
+        setError("");
+        setSuccessMessage("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        setOtp("");
     };
 
     return (
@@ -250,89 +312,176 @@ export default function Login({ onLogin }) {
             />
 
             <div className="login-card" style={{ ...cardTilt, ...cardGlowStyle }}>
-                <h2 className="login-title">{isRegistering ? "Create Account" : "Welcome Back"}</h2>
+                <h2 className="login-title">
+                    {isResettingPassword ? "Reset Password" : (isRegistering ? "Create Account" : "Welcome Back")}
+                </h2>
 
                 {successMessage && <div className="success-message">{successMessage}</div>}
 
-                <form onSubmit={handleSubmit}>
-                    {isRegistering && (
+                {isResettingPassword ? (
+                    <form onSubmit={handleForgotPassword}>
                         <div className="input-group">
-                            <label className="input-label">Name</label>
+                            <label className="input-label">Email</label>
                             <input
                                 className="login-input"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Your Name"
-                                required={isRegistering}
-                            />
-                        </div>
-                    )}
-
-                    <div className="input-group">
-                        <label className="input-label">Email</label>
-                        <input
-                            className={`login-input ${isRegistering && emailError ? 'login-input-error' : (isRegistering && email && !validateEmail(email) ? 'login-input-valid' : '')}`}
-                            type="email"
-                            value={email}
-                            onChange={(e) => handleEmailChange(e.target.value)}
-                            placeholder={isRegistering ? "you@example.com" : "admin@test.com"}
-                            required
-                        />
-                        {isRegistering && emailError && (
-                            <span className="login-field-error">{emailError}</span>
-                        )}
-                    </div>
-
-                    <div className="input-group">
-                        <label className="input-label">Password</label>
-                        <input
-                            className={`login-input ${isRegistering && passwordError ? 'login-input-error' : (isRegistering && password && !validatePassword(password) ? 'login-input-valid' : '')}`}
-                            type="password"
-                            value={password}
-                            onChange={(e) => handlePasswordChange(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                        />
-                        {isRegistering && passwordError && (
-                            <span className="login-field-error">{passwordError}</span>
-                        )}
-                    </div>
-
-                    {isOtpSent && isRegistering && (
-                        <div className="input-group">
-                            <label className="input-label">Verification OTP</label>
-                            <input
-                                className="login-input check-otp"
-                                type="text"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                placeholder="6-digit code"
-                                maxLength={6}
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="you@example.com"
                                 required
-                                style={{ letterSpacing: "0.2em", textAlign: "center", fontSize: "1.2rem" }}
+                                disabled={resetStep > 1}
                             />
                         </div>
-                    )}
 
-                    {error && <div className="error-message">{error}</div>}
+                        {resetStep >= 2 && (
+                            <div className="input-group">
+                                <label className="input-label">Verification OTP</label>
+                                <input
+                                    className="login-input check-otp"
+                                    type="text"
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value)}
+                                    placeholder="6-digit code"
+                                    maxLength={6}
+                                    required
+                                    disabled={resetStep > 2}
+                                    style={{ letterSpacing: "0.2em", textAlign: "center", fontSize: "1.2rem" }}
+                                />
+                            </div>
+                        )}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="login-button"
-                    >
-                        {loading
-                            ? (isRegistering ? (isOtpSent ? "Verifying..." : "Sending OTP...") : "Logging in...")
-                            : (isRegistering ? (isOtpSent ? "Verify & Create Account" : "Sign Up") : "Login")}
-                    </button>
+                        {resetStep === 3 && (
+                            <>
+                                <div className="input-group">
+                                    <label className="input-label">New Password</label>
+                                    <input
+                                        className="login-input"
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label className="input-label">Confirm Password</label>
+                                    <input
+                                        className="login-input"
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                </div>
+                            </>
+                        )}
 
-                    <div className="toggle-mode">
-                        {isRegistering ? "Already have an account?" : "Don't have an account?"}
-                        <button type="button" onClick={toggleMode} className="toggle-button">
-                            {isRegistering ? "Log in" : "Sign up"}
+                        {error && <div className="error-message">{error}</div>}
+
+                        <button type="submit" disabled={loading} className="login-button">
+                            {loading ? "Processing..." : (resetStep === 1 ? "Send OTP" : resetStep === 2 ? "Verify OTP" : "Reset Password")}
                         </button>
-                    </div>
-                </form>
+
+                        <div className="toggle-mode">
+                            <button type="button" onClick={toggleResetMode} className="toggle-button">
+                                Back to Login
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <form onSubmit={handleSubmit}>
+                        {isRegistering && (
+                            <div className="input-group">
+                                <label className="input-label">Name</label>
+                                <input
+                                    className="login-input"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Your Name"
+                                    required={isRegistering}
+                                />
+                            </div>
+                        )}
+
+                        <div className="input-group">
+                            <label className="input-label">Email</label>
+                            <input
+                                className={`login-input ${isRegistering && emailError ? 'login-input-error' : (isRegistering && email && !validateEmail(email) ? 'login-input-valid' : '')}`}
+                                type="email"
+                                value={email}
+                                onChange={(e) => handleEmailChange(e.target.value)}
+                                placeholder={isRegistering ? "you@example.com" : "admin@test.com"}
+                                required
+                            />
+                            {isRegistering && emailError && (
+                                <span className="login-field-error">{emailError}</span>
+                            )}
+                        </div>
+
+                        <div className="input-group">
+                            <div className="label-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                <label className="input-label" style={{ marginBottom: 0 }}>Password</label>
+                                {!isRegistering && (
+                                    <button
+                                        type="button"
+                                        onClick={toggleResetMode}
+                                        className="forgot-password-link"
+                                        style={{ background: 'none', border: 'none', color: '#60a5fa', fontSize: '0.85rem', cursor: 'pointer', padding: 0, fontWeight: '500' }}
+                                    >
+                                        Forgot Password?
+                                    </button>
+                                )}
+                            </div>
+                            <input
+                                className={`login-input ${isRegistering && passwordError ? 'login-input-error' : (isRegistering && password && !validatePassword(password) ? 'login-input-valid' : '')}`}
+                                type="password"
+                                value={password}
+                                onChange={(e) => handlePasswordChange(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                            />
+                            {isRegistering && passwordError && (
+                                <span className="login-field-error">{passwordError}</span>
+                            )}
+                        </div>
+
+                        {isOtpSent && isRegistering && (
+                            <div className="input-group">
+                                <label className="input-label">Verification OTP</label>
+                                <input
+                                    className="login-input check-otp"
+                                    type="text"
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value)}
+                                    placeholder="6-digit code"
+                                    maxLength={6}
+                                    required
+                                    style={{ letterSpacing: "0.2em", textAlign: "center", fontSize: "1.2rem" }}
+                                />
+                            </div>
+                        )}
+
+                        {error && <div className="error-message">{error}</div>}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="login-button"
+                        >
+                            {loading
+                                ? (isRegistering ? (isOtpSent ? "Verifying..." : "Sending OTP...") : "Logging in...")
+                                : (isRegistering ? (isOtpSent ? "Verify & Create Account" : "Sign Up") : "Login")}
+                        </button>
+
+                        <div className="toggle-mode">
+                            {isRegistering ? "Already have an account?" : "Don't have an account?"}
+                            <button type="button" onClick={toggleMode} className="toggle-button">
+                                {isRegistering ? "Log in" : "Sign up"}
+                            </button>
+                        </div>
+                    </form>
+                )}
             </div>
         </div>
     );
