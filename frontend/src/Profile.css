@@ -18,11 +18,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(
-        circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-        rgba(255, 255, 255, 0.04) 0%, 
-        transparent 50%
-    );
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+            rgba(255, 255, 255, 0.04) 0%,
+            transparent 50%);
     z-index: 1;
     pointer-events: none;
     transition: background 0.2s ease-out;
