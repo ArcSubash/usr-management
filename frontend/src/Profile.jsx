@@ -165,12 +165,23 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
         }
     }, []);
 
+    // Real-time updates via SSE listener in App.jsx
+    useEffect(() => {
+        const refreshEverything = () => {
+            fetchNotifications();
+            fetchActivities();
+            if (showHelpModal) {
+                fetchMyTickets(false);
+            }
+        };
+
+        window.addEventListener("db-update", refreshEverything);
+        return () => window.removeEventListener("db-update", refreshEverything);
+    }, [fetchNotifications, fetchActivities, fetchMyTickets, showHelpModal]);
+
     useEffect(() => {
         if (showHelpModal) {
             fetchMyTickets(true);
-            const refreshTickets = () => fetchMyTickets(false);
-            window.addEventListener("db-update", refreshTickets);
-            return () => window.removeEventListener("db-update", refreshTickets);
         }
     }, [showHelpModal, fetchMyTickets]);
 
@@ -312,7 +323,7 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     return (
         <div className="profile-container">
             <header className="profile-header">
-                <h2 className="profile-title">✨ தamizhan Intern</h2>
+                <h2 className="profile-title">தamizhan Skills</h2>
 
                 <div className="user-info" style={{ position: "relative" }}>
                     <span className="user-greeting">
