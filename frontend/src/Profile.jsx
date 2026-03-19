@@ -165,12 +165,23 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
         }
     }, []);
 
+    // Real-time updates via SSE listener in App.jsx
+    useEffect(() => {
+        const refreshEverything = () => {
+            fetchNotifications();
+            fetchActivities();
+            if (showHelpModal) {
+                fetchMyTickets(false);
+            }
+        };
+
+        window.addEventListener("db-update", refreshEverything);
+        return () => window.removeEventListener("db-update", refreshEverything);
+    }, [fetchNotifications, fetchActivities, fetchMyTickets, showHelpModal]);
+
     useEffect(() => {
         if (showHelpModal) {
             fetchMyTickets(true);
-            const refreshTickets = () => fetchMyTickets(false);
-            window.addEventListener("db-update", refreshTickets);
-            return () => window.removeEventListener("db-update", refreshTickets);
         }
     }, [showHelpModal, fetchMyTickets]);
 
@@ -310,34 +321,84 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     };
 
     return (
-        <div className="profile-container">
-            <header className="profile-header">
-                <h2 className="profile-title">✨ தamizhan Intern</h2>
+        <div className="profile-container" style={{ background: 'var(--bg-primary)' }}>
+            <header className="profile-header" style={{
+                background: 'transparent',
+                borderBottom: '1px solid var(--border-color)',
+                padding: '1.5rem 4rem',
+                justifyContent: 'space-between'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <h2 className="profile-title" style={{
+                        fontFamily: 'Syne, sans-serif',
+                        fontSize: '1.1rem',
+                        fontWeight: '800',
+                        letterSpacing: '0.05em',
+                        margin: 0
+                    }}>தamizhan Skills</h2>
+                </div>
 
-                <div className="user-info" style={{ position: "relative" }}>
-                    <span className="user-greeting">
-                        Hello, <b>{user?.name}</b> <span className="role-badge">{user?.role}</span>
-                    </span>
+                <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            <strong style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{user?.name}</strong>
+                        </span>
+                        <span style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            borderRadius: '9999px',
+                            padding: '0.3rem 1rem',
+                            fontSize: '0.65rem',
+                            fontWeight: '800',
+                            color: 'var(--text-primary)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
+                        }}>
+                            {user?.role}
+                        </span>
+                    </div>
 
-                    {/* Notification Container */}
-                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                    <nav style={{ display: 'flex', gap: '3rem' }}>
+                        <span
+                            onClick={() => setView('dashboard')}
+                            className={`nav-link ${view === 'dashboard' ? 'active' : ''}`}
+                        >
+                            Dashboard
+                        </span>
+                        <span
+                            onClick={() => setView('settings')}
+                            className={`nav-link ${view === 'settings' ? 'active' : ''}`}
+                        >
+                            Settings
+                        </span>
+                    </nav>
+
+                    <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'center' }}>
                         <div ref={notifRef} style={{ display: 'flex', position: 'relative' }}>
-                            {/* Notification bell in header */}
                             <button
                                 className={`notif-bell-btn ${unreadCount > 0 ? "bell-active" : "bell-idle"}`}
                                 onClick={() => setShowNotifPopup(!showNotifPopup)}
-                                id="notification-bell"
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    transition: 'all 0.3s ease',
+                                    color: showNotifPopup ? '#ffffff' : 'rgba(255, 255, 255, 0.4)',
+                                    display: 'flex',
+                                    padding: '0.4rem',
+                                    cursor: 'pointer'
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+                                onMouseLeave={(e) => (e.currentTarget.style.color = showNotifPopup ? '#ffffff' : 'rgba(255, 255, 255, 0.4)')}
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                                 </svg>
                                 {unreadCount > 0 && (
-                                    <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                                    <span className="notif-badge" style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', top: '-2px', right: '-2px' }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
                                 )}
                             </button>
 
-                            {/* Notification Popup overlay */}
                             {showNotifPopup && (
                                 <div className="notif-popup fade-in">
                                     <div className="notif-header">
@@ -416,27 +477,16 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                             )}
                         </div>
 
-                        {/* Settings Gear */}
-                        <button
-                            className={`notif-bell-btn ${view === 'settings' ? 'active-gear' : ''}`}
-                            style={{ background: view === 'settings' ? 'rgba(59, 130, 246, 0.15)' : '', color: view === 'settings' ? '#60a5fa' : '' }}
-                            onClick={() => setView(view === 'settings' ? 'dashboard' : 'settings')}
-                            title="User Settings"
-                        >
-                            {view === 'settings' ? (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                                    <polyline points="12 19 5 12 12 5"></polyline>
-                                </svg>
-                            ) : (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                                </svg>
-                            )}
-                        </button>
 
-                        <button onClick={() => setShowLogoutConfirm(true)} className="btn-logout">
+
+                        <button
+                            onClick={() => setShowLogoutConfirm(true)}
+                            className="btn-pill"
+                            style={{
+                                transition: 'all 0.4s cubic-bezier(0.19, 1, 0.22, 1)',
+                                cursor: 'pointer'
+                            }}
+                        >
                             Logout
                         </button>
                     </div>
@@ -444,33 +494,33 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
             </header>
 
             {view === 'dashboard' ? (
-                <main className="profile-content fade-in" style={{ display: 'block', maxWidth: '800px', margin: '2rem auto' }}>
-                    <section className="profile-panel" style={{ textAlign: 'center', padding: '4rem 2rem', marginBottom: '2rem' }}>
-                        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}></div>
-                        <h2 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '2rem' }}>Welcome Back, {user?.name}!</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.6' }}>
-                            This is your primary dashboard. You can access your User Settings, view notifications, and manage your account by clicking the <b>Gear Icon</b> in the top right.
-                        </p>
-                    </section>
+                <main className="super-title-container fade-in">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div className="super-title-wrapper">
+                            <h1 className="super-title">Welcome Back</h1>
+                            <div className="super-title-echo echo-1">Welcome Back</div>
+                            <div className="super-title-echo echo-2">Welcome Back</div>
+                            <div className="super-title-echo echo-3">Welcome Back</div>
+                        </div>
 
-                    <section className="profile-panel" style={{ textAlign: 'left', padding: '3rem 2rem' }}>
-                        <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-primary)', fontSize: '1.8rem', textAlign: 'center', fontWeight: '600' }}>
-                            About Tamizhan Skills
-                        </h3>
-                        <h3 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-primary)', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                            <span style={{ fontSize: '1.8rem' }}>🎓</span>
-                            Tamizhan Skills – RISE Program
-                        </h3>
-                        <div style={{ position: 'relative', zIndex: 1 }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1rem' }}>
-                                <strong style={{ color: 'var(--text-primary)' }}>Tamizhan Skills</strong> is a Tamil Nadu-based ed-tech initiative that provides affordable skill training, internships, and career guidance for students.
-                            </p>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1rem' }}>
-                                The <strong style={{ color: 'var(--text-primary)' }}>RISE (Real-time Internship & Skill Enhancement)</strong> program is a free virtual internship designed to help students gain hands-on experience through real projects, mentorship, and industry-relevant skills.
-                            </p>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.7', margin: 0 }}>
-                                It aims to bridge the gap between academic learning and practical industry exposure, helping students build portfolios and improve employability.
-                            </p>
+                        <div className="super-title-wrapper" style={{ marginTop: '0.5rem' }}>
+                            <h1 className="elegant-name">{user?.name}</h1>
+                            <div className="super-title-echo name-echo-1 elegant-name" style={{ opacity: 0.15 }}>{user?.name}</div>
+
+                        </div>
+                    </div>
+
+                    <section className="super-about-section">
+                        <div className="super-about-card">
+                            <span className="about-quote-icon">“</span>
+                            <div className="about-content">
+                                <h2 className="about-heading">About Tamizhan Skills 🎓</h2>
+                                <div className="about-body">
+                                    <p><b>Tamizhan Skills</b> is a Tamil Nadu-based ed-tech initiative that provides affordable skill training, internships, and career guidance for students.</p>
+                                    <p>The <b>RISE (Real-time Internship & Skill Enhancement)</b> program is a free virtual internship designed to help students gain hands-on experience through real projects, mentorship, and industry-relevant skills.</p>
+                                    <p>It aims to bridge the gap between academic learning and practical industry exposure, helping students build portfolios and improve employability.</p>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </main>
