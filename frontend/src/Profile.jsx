@@ -31,6 +31,28 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     const [notifLoading, setNotifLoading] = useState(false);
     const [showNotifPopup, setShowNotifPopup] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!containerRef.current) return;
+            const { left, top, width, height } = containerRef.current.getBoundingClientRect();
+            const x = ((e.clientX - left) / width) * 100;
+            const y = ((e.clientY - top) / height) * 100;
+
+            containerRef.current.style.setProperty('--mouse-x', `${x}%`);
+            containerRef.current.style.setProperty('--mouse-y', `${y}%`);
+
+            // Also calculate tilt
+            const tiltX = (y - 50) * 0.1; // subtle tilt
+            const tiltY = (x - 50) * -0.1;
+            containerRef.current.style.setProperty('--tilt-x', `${tiltX}deg`);
+            containerRef.current.style.setProperty('--tilt-y', `${tiltY}deg`);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, []);
     const [view, setView] = useState("dashboard");
     const notifRef = useRef(null);
 
@@ -321,7 +343,13 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
     };
 
     return (
-        <div className="profile-container" style={{ background: 'var(--bg-primary)' }}>
+        <div ref={containerRef} className="profile-container" style={{
+            background: 'var(--bg-primary)',
+            '--mouse-x': '50%',
+            '--mouse-y': '50%',
+            '--tilt-x': '0deg',
+            '--tilt-y': '0deg'
+        }}>
             <header className="profile-header" style={{
                 background: 'transparent',
                 borderBottom: '1px solid var(--border-color)',
@@ -494,8 +522,14 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
             </header>
 
             {view === 'dashboard' ? (
-                <main className="super-title-container fade-in">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <main className="super-title-container fade-in" style={{ perspective: '1000px' }}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem',
+                        transform: 'rotateX(var(--tilt-x)) rotateY(var(--tilt-y))',
+                        transition: 'transform 0.1s cubic-bezier(0.17, 0.67, 0.83, 0.67)'
+                    }}>
                         <div className="super-title-wrapper">
                             <h1 className="super-title">Welcome Back</h1>
                             <div className="super-title-echo echo-1">Welcome Back</div>
@@ -504,8 +538,13 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                         </div>
 
                         <div className="super-title-wrapper" style={{ marginTop: '0.5rem' }}>
-                            <h1 className="elegant-name">{user?.name}</h1>
-                            <div className="super-title-echo name-echo-1 elegant-name" style={{ opacity: 0.15 }}>{user?.name}</div>
+                            <h1 className="elegant-name" style={{
+                                transform: 'translateZ(20px)',
+                            }}>{user?.name}</h1>
+                            <div className="super-title-echo name-echo-1 elegant-name" style={{
+                                opacity: 0.15,
+                                transform: 'translate(-49.7%, -50.3%) translateZ(-10px)'
+                            }}>{user?.name}</div>
 
                         </div>
                     </div>
