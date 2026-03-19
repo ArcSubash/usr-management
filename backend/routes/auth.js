@@ -237,7 +237,7 @@ router.get("/stream", (req, res) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         res.writeHead(200, {
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
@@ -247,7 +247,7 @@ router.get("/stream", (req, res) => {
         const onUpdate = (data) => {
             // Only send status updates to the relevant user OR all admins
             if (data.type === 'status_update') {
-               res.write(`data: ${JSON.stringify(data)}\n\n`);
+                res.write(`data: ${JSON.stringify(data)}\n\n`);
             }
         };
 
