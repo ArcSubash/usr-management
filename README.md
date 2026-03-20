@@ -19,6 +19,19 @@ Backend API (Render):
 https://usr-mng-bknd.onrender.com
 
 ------------------------------------------------------------------------
+
+# Default Admin Account
+
+When the backend starts for the first time, a **default admin account**
+is automatically created.
+
+Use the following credentials:
+
+    Email: admin@test.com
+    Password: admin123
+
+------------------------------------------------------------------------
+
 # FIRSTLY MODIFY THE `.env.example` file's content with your mongodb connection string and other details and rename it to `.env`
 ------------------------------------------------------------------------
 # Mongo DB Setup
@@ -256,17 +269,6 @@ Frontend runs at:
 
 ------------------------------------------------------------------------
 
-# Default Admin Account
-
-When the backend starts for the first time, a **default admin account**
-is automatically created.
-
-Use the following credentials:
-
-    Email: admin@test.com
-    Password: admin123
-
-------------------------------------------------------------------------
 
 # API Endpoints
 

@@ -9,7 +9,7 @@ export default function Login({ onLogin }) {
     const [password, setPassword] = useState("");
     const [otp, setOtp] = useState("");
     const [isOtpSent, setIsOtpSent] = useState(false);
-    
+
     // Forgot Password states
     const [isResettingPassword, setIsResettingPassword] = useState(false);
     const [resetStep, setResetStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
@@ -411,7 +411,7 @@ export default function Login({ onLogin }) {
                                 type="email"
                                 value={email}
                                 onChange={(e) => handleEmailChange(e.target.value)}
-                                placeholder={isRegistering ? "you@example.com" : "admin@test.com"}
+                                placeholder={isRegistering ? "you@example.com" : ""}
                                 required
                             />
                             {isRegistering && emailError && (
