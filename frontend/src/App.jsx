@@ -18,7 +18,7 @@ export default function App() {
 
   const syncUser = async (token) => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "https://usr-mng-bknd.onrender.com/api";
+      const baseUrl = import.meta.env.VITE_API_URL || "/api";
       // Add cache-busting timestamp to ensure we get fresh data
       const res = await fetch(`${baseUrl}/auth/me?t=${Date.now()}`, {
         headers: { "Authorization": `Bearer ${token}` }
