@@ -1,5 +1,6 @@
 const express = require("express");
 const User = require("../models/User");
+const OTP = require("../models/OTP");
 const { auth, adminOnly } = require("../middleware/auth");
 const Notification = require("../models/Notification");
 const Activity = require("../models/Activity");
@@ -91,7 +92,7 @@ router.delete("/:id", auth, adminOnly, async (req, res) => {
 // User: update own profile (MUST be before /:id to avoid matching "profile" as an id)
 router.put("/profile", auth, async (req, res) => {
   try {
-    const { name, currentPassword, password } = req.body;
+    const { name, currentPassword, password, otp } = req.body;
 
     // Find user by id (from auth middleware)
     const user = await User.findById(req.user.id);
@@ -106,8 +107,29 @@ router.put("/profile", auth, async (req, res) => {
     // Update fields if provided
     if (name) user.name = name;
 
-    // If attempting to update password, check current password first
+    // If attempting to update password, check current password AND OTP first
     if (password) {
+      // Password validation: min 6 chars, alphanumeric (at least one letter + one number)
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      if (!/[a-zA-Z]/.test(password)) {
+        return res.status(400).json({ message: "Password must contain at least one letter" });
+      }
+      if (!/[0-9]/.test(password)) {
+        return res.status(400).json({ message: "Password must contain at least one number" });
+      }
+
+      if (!otp) {
+        return res.status(400).json({ message: "Verification OTP is required to change password" });
+      }
+
+      // Verify OTP
+      const otpRecord = await OTP.findOne({ email: user.email });
+      if (!otpRecord || otpRecord.otp !== otp) {
+        return res.status(400).json({ message: "OTP has expired or is invalid" });
+      }
+
       if (!currentPassword) {
         return res.status(400).json({ message: "Current password is required to set a new password" });
       }
@@ -118,6 +140,9 @@ router.put("/profile", auth, async (req, res) => {
       }
 
       user.passwordHash = await bcrypt.hash(password, 10);
+
+      // Clean up OTP record
+      await OTP.findByIdAndDelete(otpRecord._id);
     }
 
     await user.save();
@@ -187,6 +212,17 @@ router.put("/:id", auth, adminOnly, async (req, res) => {
 
     if (name) user.name = name;
     if (password) {
+      // Password validation: min 6 chars, alphanumeric (at least one letter + one number)
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      if (!/[a-zA-Z]/.test(password)) {
+        return res.status(400).json({ message: "Password must contain at least one letter" });
+      }
+      if (!/[0-9]/.test(password)) {
+        return res.status(400).json({ message: "Password must contain at least one number" });
+      }
+
       user.passwordHash = await bcrypt.hash(password, 10);
     }
     if (role && ["admin", "user"].includes(role)) {

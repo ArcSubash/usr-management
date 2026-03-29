@@ -295,8 +295,46 @@ router.post("/login", emailValidation, handleValidationErrors, async (req, res) 
 
 const eventEmitter = require("../utils/events");
 
-// GET CURRENT USER
+// SEND PASSWORD CHANGE OTP (For logged-in users)
 const { auth } = require("../middleware/auth");
+router.post("/send-password-change-otp", auth, async (req, res) => {
+    try {
+        const { currentPassword } = req.body;
+        if (!currentPassword) {
+            return res.status(400).json({ message: "Current password is required" });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+        if (!ok) {
+            return res.status(400).json({ message: "Invalid current password" });
+        }
+
+        const email = user.email;
+
+        // Generate 6 digit random number
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Create or update existing OTP token record for user
+        await OTP.findOneAndDelete({ email });
+        await OTP.create({ email, otp: otpCode });
+
+        // Try sending
+        const sent = await sendEmail(email, otpCode);
+        if (!sent) {
+            return res.status(500).json({ message: "Could not send OTP Email" });
+        }
+
+        return res.json({ message: "Password change OTP has been sent ✅" });
+    } catch (err) {
+        console.log("OTP ERROR:", err);
+        return res.status(500).json({ message: "Server error generating OTP" });
+    }
+});
+
+// GET CURRENT USER
 router.get("/me", auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);

@@ -13,6 +13,9 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
 
     const [currentPassword, setCurrentPassword] = useState("");
     const [password, setPassword] = useState("");
+    const [otp, setOtp] = useState("");
+    const [otpSent, setOtpSent] = useState(false);
+    const [otpLoading, setOtpLoading] = useState(false);
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [activeTab, setActiveTab] = useState("account");
@@ -229,6 +232,14 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
         }
     }
 
+    const validatePassword = (val) => {
+        if (!val) return "";
+        if (val.length < 6) return "Password must be at least 6 characters";
+        if (!/[a-zA-Z]/.test(val)) return "Must contain at least one letter";
+        if (!/[0-9]/.test(val)) return "Must contain at least one number";
+        return "";
+    };
+
     async function handleNameUpdate(e) {
         e.preventDefault();
         setError("");
@@ -255,14 +266,50 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
         }
     }
 
+    async function handleSendOTP() {
+        setSecurityError("");
+        setSecurityStatus("");
+
+        if (!currentPassword) {
+            setSecurityError("Enter your current password first to receive OTP");
+            return;
+        }
+
+        const passErr = validatePassword(password);
+        if (passErr) {
+            setSecurityError(passErr);
+            return;
+        }
+
+        setOtpLoading(true);
+
+        try {
+            const res = await api.post("/auth/send-password-change-otp", { currentPassword });
+            setOtpSent(true);
+            setSecurityStatus(res.data.message);
+            // Don't clear status too quickly so user sees it
+        } catch (err) {
+            setSecurityError(err?.response?.data?.message || "Failed to send OTP");
+        } finally {
+            setOtpLoading(false);
+        }
+    }
+
     async function handlePasswordChange(e) {
         e.preventDefault();
         setSecurityError("");
         setSecurityStatus("");
         setSecurityLoading(true);
 
-        if (!currentPassword || !password) {
-            setSecurityError("Both current and new passwords are required");
+        if (!currentPassword || !password || !otp) {
+            setSecurityError("Current password, new password, and OTP are required");
+            setSecurityLoading(false);
+            return;
+        }
+
+        const passErr = validatePassword(password);
+        if (passErr) {
+            setSecurityError(passErr);
             setSecurityLoading(false);
             return;
         }
@@ -271,7 +318,8 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
             const data = {
                 name: user.name,
                 currentPassword,
-                password
+                password,
+                otp
             };
 
             await api.put("/users/profile", data);
@@ -279,6 +327,8 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
 
             setCurrentPassword("");
             setPassword("");
+            setOtp("");
+            setOtpSent(false);
 
             setTimeout(() => setSecurityStatus(""), 3000);
             fetchNotifications();
@@ -748,14 +798,49 @@ export default function Profile({ user, onLogout, onUpdateUser }) {
                                             />
                                         </div>
 
-                                        <button
-                                            type="submit"
-                                            className="btn-primary"
-                                            disabled={securityLoading || !currentPassword || !password || user?.deactivated}
-                                            style={{ marginTop: '1rem' }}
-                                        >
-                                            {securityLoading ? "Updating..." : "Update Password"}
-                                        </button>
+                                        {!otpSent ? (
+                                            <button
+                                                type="button"
+                                                className="btn-primary"
+                                                onClick={handleSendOTP}
+                                                disabled={otpLoading || !currentPassword || !password || user?.deactivated}
+                                                style={{ marginTop: '1rem' }}
+                                            >
+                                                {otpLoading ? "Sending OTP..." : "Send Verification OTP"}
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <div className="input-group">
+                                                    <label className="input-label">Verification OTP</label>
+                                                    <input
+                                                        className="form-input"
+                                                        placeholder="Enter 6-digit OTP"
+                                                        type="text"
+                                                        value={otp}
+                                                        onChange={(e) => setOtp(e.target.value)}
+                                                        required
+                                                        disabled={user?.deactivated}
+                                                    />
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                                    <button
+                                                        type="submit"
+                                                        className="btn-primary"
+                                                        disabled={securityLoading || !otp || user?.deactivated}
+                                                    >
+                                                        {securityLoading ? "Updating..." : "Update Password"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-secondary"
+                                                        onClick={handleSendOTP}
+                                                        disabled={otpLoading}
+                                                    >
+                                                        {otpLoading ? "Sending..." : "Resend OTP"}
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
                                     </form>
                                 </section>
                             )}
