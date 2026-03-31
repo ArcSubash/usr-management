@@ -25,11 +25,15 @@ https://usr-mng-bknd.onrender.com
 When the backend starts for the first time, a **default admin account**
 is automatically created.
 
-Use the following credentials:
+Admin credentials:
 
     Email: admin@test.com
     Password: admin123
+    
+Test User credentials:
 
+    Email: subash110607@gmail.com
+    Password: subash11
 ------------------------------------------------------------------------
 
 # FIRSTLY MODIFY THE `.env.example` file's content with your mongodb connection string and other details and rename it to `.env`
