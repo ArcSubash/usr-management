@@ -18,7 +18,7 @@ export default function App() {
 
   const syncUser = async (token) => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "https://usr-mng-bknd.onrender.com/api";
+      const baseUrl = "https://usr-mng-bknd.onrender.com/api";
       // Add cache-busting timestamp to ensure we get fresh data
       const res = await fetch(`${baseUrl}/auth/me?t=${Date.now()}`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -80,7 +80,7 @@ export default function App() {
     const token = localStorage.getItem("token");
     if (!user || !token) return;
 
-    const baseUrl = import.meta.env.VITE_API_URL || "https://usr-mng-bknd.onrender.com/api";
+    const baseUrl = "https://usr-mng-bknd.onrender.com/api";
     // Construct stream URL (remove /api from baseUrl if it ends with it, as EventSource URL needs to match the route)
     const streamUrl = `${baseUrl.replace(/\/api$/, '')}/api/auth/stream?token=${token}`;
     const eventSource = new EventSource(streamUrl);
