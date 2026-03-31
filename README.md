@@ -13,8 +13,8 @@ dashboard.
 I have also deployed the project online, using render and vercel, with some tweeks in the code. I have hosted Frontend and Backend in Render, and OTP sending service in Vercel, and connnected it using API.
 
 NOTE: Due to some technical issues, currently the OTP is not sending while registering. so use the Test User Credentials to login as a user
-        Email: subash110607@gmail.com
-        password: subash11
+        `Email: subash110607@gmail.com
+        password: subash11`
 This issue happens only in the deployment(live), But works fine in the localhost. 
 
 Frontend (Render):
